@@ -30,9 +30,9 @@ trait Whitespace {
   def multiLineAnnotationWhitespaceChar[_: P] =
     P(CharIn(" \t\u000b\f\r\n") | (!"@\"\"\"" ~~ "@"))
 
-  def singleLineComment[_: P] = P("#" ~~ !"@" ~~/ (!"\n" ~~ AnyChar).repX ~~ &("\n"))
+  def singleLineComment[_: P] = P("#" ~~ !"@" ~~/ (!"\n" ~~ AnyChar).repX)
 
   def multiLineCommentChar[_: P]: P[Unit] = P(!"\"\"\"" ~~ AnyChar)
 
-  def multiLineComment[_: P]: P[Unit] = P("\"\"\"" ~~/ (multiLineCommentChar.repX) ~~ "\"\"\"")
+  def multiLineComment[_: P]: P[Unit] = P("\"\"\"" ~~ !"@" ~~/ (multiLineComment | multiLineCommentChar).repX ~~ "\"\"\"")
 }
