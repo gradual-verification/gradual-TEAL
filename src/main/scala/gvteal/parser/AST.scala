@@ -187,6 +187,7 @@ case class BlockStatement(
 
 // Definitions
 sealed trait Definition extends Node
+case class FncMemberDefinition(id: Identifier, span: SourceSpan) extends Node
 case class MemberDefinition(id: Identifier, valueType: Type, span: SourceSpan) extends Node
 case class TypeDefinition(id: Identifier, value: Type, span: SourceSpan) extends Definition
 case class StructDefinition(id: Identifier, fields: Option[List[MemberDefinition]], span: SourceSpan) extends Definition
@@ -208,6 +209,15 @@ case class MethodDefinition(
   specifications: List[Specification],
   span: SourceSpan
 ) extends Definition
+case class FunctionDefinition(
+  id: Identifier,
+  // returnType: Type, (Type infernece in typed AST)
+  arguments: List[FncMemberDefinition],
+  body: Option[BlockStatement],
+  specifications: List[Specification],
+  span: SourceSpan
+) extends Definition
+
 
 // pyTEAL N-Ary Ops
 object PyNaryOperator extends Enumeration {

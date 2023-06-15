@@ -33,10 +33,13 @@ trait Definitions extends Statements with Types {
   // TODO: Fix PyBlockStatement in Statements.scala
   def functionDefinition[_: P]: P[FunctionDefinition] = 
     P(
-      "def" ~ identifier ~ "(" ~ methodParameter.rep(0, ",") ~ ")" ~ (pyBlockStatement.map(Some(_))) ~~ pos
+      "def" ~ identifier ~ "(" ~ functionParameter.rep(0, ",") ~ ")" ~
+      annotations ~
+      (P(";").map(_ => None) | blockStatement.map(Some(_))) ~~
+      pos
     ).map({
-      case (ret, id, args, annot, body, end) =>
-        FunctionDefinition(id, ret, args.toList, body, annot, SourceSpan(ret.span.start, end))
+      case (id, args, annot, body, end) =>
+        FunctionDefinition(id, args.toList, body, annot, SourceSpan(id.span.start, end))
     })
   def functionParameter[_: P]: P[FncMemberDefinition] = 
     P(identifier).map({

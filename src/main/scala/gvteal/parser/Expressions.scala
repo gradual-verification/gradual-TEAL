@@ -5,22 +5,22 @@ trait Expressions extends Types {
   import BinaryOperator._
   import PyBinaryOperator._
 
-  val pyOperators: Map[String, (Int, PyBinaryOperator)] = Map(
-    "BitwiseOr"  -> (3,  BitwiseOr),
-    "BitwiseXor"  -> (4,  BitwiseXor),
-    "BitwiseAnd"  -> (5,  BitwiseAnd),
-    "Eq" -> (6,  Equal),
-    "Neq" -> (6,  NotEqual),
-    "Lt"  -> (7,  Less),
-    "Le" -> (7,  LessEqual),
-    "Ge" -> (7,  GreaterEqual),
-    "Gt"  -> (7,  Greater),
-    "ShiftLeft" -> (8,  ShiftLeft),
-    "ShiftRight" -> (8,  ShiftRight),
-    "Minus"  -> (9,  Subtract),
-    "Div"  -> (10,  Divide),
-    "Mod"  -> (10,  Modulus),
-  )
+  // val pyOperators: Map[String, (Int, PyBinaryOperator)] = Map(
+  //   "BitwiseOr"  -> (3,  BitwiseOr),
+  //   "BitwiseXor"  -> (4,  BitwiseXor),
+  //   "BitwiseAnd"  -> (5,  BitwiseAnd),
+  //   "Eq" -> (6,  Equal),
+  //   "Neq" -> (6,  NotEqual),
+  //   "Lt"  -> (7,  Less),
+  //   "Le" -> (7,  LessEqual),
+  //   "Ge" -> (7,  GreaterEqual),
+  //   "Gt"  -> (7,  Greater),
+  //   "ShiftLeft" -> (8,  ShiftLeft),
+  //   "ShiftRight" -> (8,  ShiftRight),
+  //   "Minus"  -> (9,  Subtract),
+  //   "Div"  -> (10,  Divide),
+  //   "Mod"  -> (10,  Modulus),
+  // )
 
   val operators: Map[String, (Int, BinaryOperator)] = Map(
     "||" -> (1,  LogicalOr),
