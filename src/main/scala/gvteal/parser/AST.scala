@@ -218,8 +218,8 @@ object NaryOperator extends Enumeration {
 object BinaryOperator extends Enumeration {
   type BinaryOperator = Value
   
-  //val LogicalOr = Value("||")
-  //val LogicalAnd = Value("&&")
+  val LogicalOr = Value("||")
+  val LogicalAnd = Value("&&")
   val BitwiseOr = Value("BitwiseOr")
   val BitwiseXor = Value("BitwiseXor")
   val BitwiseAnd = Value("BitwiseAnd")
