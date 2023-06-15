@@ -25,8 +25,11 @@ case class ArrayType(valueType: Type, span: SourceSpan) extends Type
 sealed trait Expression extends Node
 case class VariableExpression(variable: Identifier, span: SourceSpan) extends Expression
 case class IncrementExpression(value: Expression, operator: IncrementOperator, span: SourceSpan) extends Expression
+//case class PyNaryExpression
 case class BinaryExpression(left: Expression, operator: BinaryOperator.Value, right: Expression, span: SourceSpan) extends Expression
+case class PyBinaryExpression(left: Expression, operator: PyBinaryOperator.Value, right: Expression, span: SourceSpan)
 case class UnaryExpression(operand: Expression, operator: UnaryOperator.Value, span: SourceSpan) extends Expression
+case class PyUnaryExpression(operand: Expression, operator: PyUnaryOperator.Value, span: SourceSpan) extends Expression
 case class TernaryExpression(condition: Expression, ifTrue: Expression, ifFalse: Expression, span: SourceSpan) extends Expression
 case class InvokeExpression(method: Identifier, arguments: List[Expression], span: SourceSpan) extends Expression
 case class AllocExpression(valueType: Type, span: SourceSpan) extends Expression
@@ -206,9 +209,9 @@ case class MethodDefinition(
   span: SourceSpan
 ) extends Definition
 
-// PyTEAL N-Ary Ops
-object NaryOperator extends Enumeration {
-  type NaryOperator = Value
+// pyTEAL N-Ary Ops
+object PyNaryOperator extends Enumeration {
+  type PyNaryOperator = Value
   val LogicalOrNary = Value("Or")
   val LogicalAndNary = Value("And")
   val AddNary = Value("Add")
@@ -216,68 +219,96 @@ object NaryOperator extends Enumeration {
   val ConcatNary = Value("Concat")
 }
 
+// pyTEAL Binary Ops
+object PyBinaryOperator extends Enumeration {
+  type PyBinaryOperator = Value
+
+  val PyBitwiseOr = Value("BitwiseOr")
+  val PyBitwiseXor = Value("BitwiseXor")
+  val PyBitwiseAnd = Value("BitwiseAnd")
+  val PyEqual = Value("Eq")
+  val PyNotEqual = Value("Neq")
+  val PyLess = Value("Lt")
+  val PyLessEqual = Value("Le")
+  val PyGreaterEqual = Value("Ge")
+  val PyGreater = Value("Gt")
+  val PyShiftLeft = Value("ShiftLeft")
+  val PyShiftRight = Value("ShiftRight")
+  val PySubtract = Value("Minus")
+  val PyDivide = Value("Div")
+  val PyModulus = Value("Mod")
+  val PyGetBit = Value("GetBit")
+  val PyGetByte = Value("GetByte")
+  val PyBytesAdd = Value("BytesAdd")
+  val PyBytesMinus = Value("BytesMinus")
+  val PyBytesDiv = Value("BytesDiv")
+  val PyBytesMul = Value("BytesMul")
+  val PyBytesMod = Value("BytesMod")
+  val PyBytesAnd = Value("BytesAnd")
+  val PyBytesOr = Value("BytesOr")
+  val PyBytesXor = Value("BytesXor")
+  val PyBytesEq = Value("BytesEq")
+  val PyBytesNeq = Value("BytesNeq")
+  val PyBytesLt = Value("BytesLt")
+  val PyBytesLe = Value("BytesLe")
+  val PyBytesGt = Value("BytesGt")
+  val PyBytesGe = Value("BytesGe")
+  val PyExtractUnit16 = Value("ExtractUnit16")
+  val PyExtractUnit32 = Value("ExtractUnit32")
+  val PyExtractUnit64 = Value("ExtractUnit64")
+}
+
 object BinaryOperator extends Enumeration {
   type BinaryOperator = Value
   
   val LogicalOr = Value("||")
   val LogicalAnd = Value("&&")
-  val BitwiseOr = Value("BitwiseOr")
-  val BitwiseXor = Value("BitwiseXor")
-  val BitwiseAnd = Value("BitwiseAnd")
-  val Equal = Value("Eq")
-  val NotEqual = Value("Neq")
-  val Less = Value("Lt")
-  val LessEqual = Value("Le")
-  val GreaterEqual = Value("Ge")
-  val Greater = Value("Gt")
-  val ShiftLeft = Value("ShiftLeft")
-  val ShiftRight = Value("ShiftRight")
-  //val Add = Value("+")
-  val Subtract = Value("Minus")
-  //val Multiply = Value("*")
-  val Divide = Value("Div")
-  val Modulus = Value("Mod")
-  val GetBit = Value("GetBit")
-  val GetByte = Value("GetByte")
-  val BytesAdd = Value("BytesAdd")
-  val BytesMinus = Value("BytesMinus")
-  val BytesDiv = Value("BytesDiv")
-  val BytesMul = Value("BytesMul")
-  val BytesMod = Value("BytesMod")
-  val BytesAnd = Value("BytesAnd")
-  val BytesOr = Value("BytesOr")
-  val BytesXor = Value("BytesXor")
-  val BytesEq = Value("BytesEq")
-  val BytesNeq = Value("BytesNeq")
-  val BytesLt = Value("BytesLt")
-  val BytesLe = Value("BytesLe")
-  val BytesGt = Value("BytesGt")
-  val BytesGe = Value("BytesGe")
-  val ExtractUnit16 = Value("ExtractUnit16")
-  val ExtractUnit32 = Value("ExtractUnit32")
-  val ExtractUnit64 = Value("ExtractUnit64")
+  val BitwiseOr = Value("|")
+  val BitwiseXor = Value("^")
+  val BitwiseAnd = Value("&")
+  val Equal = Value("==")
+  val NotEqual = Value("!=")
+  val Less = Value("<")
+  val LessEqual = Value("<=")
+  val GreaterEqual = Value(">=")
+  val Greater = Value(">")
+  val ShiftLeft = Value("<<")
+  val ShiftRight = Value(">>")
+  val Add = Value("+")
+  val Subtract = Value("-")
+  val Multiply = Value("*")
+  val Divide = Value("/")
+  val Modulus = Value("%")
+}
+
+// pyTEAL Unary Ops
+object PyUnaryOperator extends Enumeration {
+  type PyUnaryOperator = Value
+  val Not = Value("Not")
+  val BitwiseNot = Value("BitwiseNot")
+  val Btoi = Value("Btoi")
+  val Itob = Value("Itob")
+  val Len = Value("Len")
+  val BitLen = Value("BitLen")
+  val Sha256 = Value("Sha256")
+  val Sqrt = Value("Sqrt")
+  val Pop = Value("Pop")
+  val Balance = Value("Balance")
+  val MinBalance = Value("MinBalance")
+  val BytesNot = Value("BytesNot")
+  val BytesSqrt = Value("BytesSqrt")
+  val BytesZero = Value("BytesZero")
+  val Log = Value("Log")
+  //TODO: sha512_256, Sha3_256
+
 }
 
 object UnaryOperator extends Enumeration {
   type UnaryOperator = Value
-  val Not = Value("Not")
-  val BitwiseNot = Value("BitwiseNot")
-  // val Btoi = Value("Btoi")
-  // val Itob = Value("Itob")
-  // val Len = Value("Len")
-  // val BitLen = Value("BitLen")
-  // val Sha256 = Value("Sha256")
-  // val Sqrt = Value("Sqrt")
-  // val Pop = Value("Pop")
-  // val Balance = Value("Balance")
-  // val MinBalance = Value("MinBalance")
-  // val BytesNot = Value("BytesNot")
-  // val BytesSqrt = Value("BytesSqrt")
-  // val BytesZero = Value("BytesZero")
-  // val Log = Value("Log")
-  // TODO: sha512_256, Sha3_256
-  // val Negate = Value("-")
-  // val Deref = Value("*")
+  val Not = Value("!")
+  val BitwiseNot = Value("~")
+  val Negate = Value("-")
+  val Deref = Value("*")
 }
 
 sealed trait IncrementOperator

@@ -7,6 +7,7 @@ trait Definitions extends Statements with Types {
       structDefinition.map(Seq(_)) |
       typeDefinition.map(Seq(_)) |
       methodDefinition.map(Seq(_)) |
+      functionDefinition.map(Seq(_)) | 
       useDeclaration.map(Seq(_)) |
       importDeclaration.map(Seq(_)) |
       predicateAnnotation
@@ -26,6 +27,20 @@ trait Definitions extends Statements with Types {
   def typeDefinition[_: P]: P[TypeDefinition] =
     P(span(kw("typedef") ~ typeReference ~ identifier ~ ";")).map({
       case ((defType, id), span) => TypeDefinition(id, defType, span)
+    })
+
+  // PyTEAL function definitions
+  // TODO: Fix PyBlockStatement in Statements.scala
+  def functionDefinition[_: P]: P[FunctionDefinition] = 
+    P(
+      "def" ~ identifier ~ "(" ~ methodParameter.rep(0, ",") ~ ")" ~ (pyBlockStatement.map(Some(_))) ~~ pos
+    ).map({
+      case (ret, id, args, annot, body, end) =>
+        FunctionDefinition(id, ret, args.toList, body, annot, SourceSpan(ret.span.start, end))
+    })
+  def functionParameter[_: P]: P[FncMemberDefinition] = 
+    P(identifier).map({
+      case(id) => FncMemberDefinition(id, SourceSpan(id.span.start, id.span.end))
     })
 
   def methodDefinition[_: P]: P[MethodDefinition] =

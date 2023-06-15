@@ -12,6 +12,7 @@ trait Statements extends Specifications {
 
   def concreteStatement[_: P]: P[Statement] =
     P(
+      pyBlockStatement |
       blockStatement |
       ifStatement |
       whileStatement |
@@ -22,9 +23,44 @@ trait Statements extends Specifications {
       (simpleStatement ~/ ";")
     )
 
+  // !URGENT
+  // TODO: Python block pieces!!!
   private sealed trait BlockPiece
   private case class BlockStatementPiece(s: Statement) extends BlockPiece
   private case class BlockAnnotationPiece(s: Seq[Specification]) extends BlockPiece
+  // private sealed trait PyBlockPiece
+  // private case class PyBlockStatementPiece(s: Statement) extends BlockPiece
+  // private case class PyBlockAnnotationPiece(s: Seq[Specification]) extends BlockPiece
+
+  // TODO: Python block piece logic for whitespace parsing [Whitespace scoping parsing](https://jayconrod.com/posts/101/how-python-parses-white-space)
+  private def pyBlockPiece[_: P]: P[PyBlockPiece] = 
+    P(concreteStatement.map(BlockStatementPiece(_))) | annotation.map(BlockAnnotationPiece(_)) 
+
+  // PyTEAL blocks
+  // TODO: Figure out if block pieces are the same? Probably not, we have to do the same thing Python does by parsing whitespace scoping
+  def pyBlockStatement[_: P]: P[PyBlockStatement] = 
+    P(span(":" ~ pyBlockPiece.rep))
+    .map({
+      case (pieces, span) =>
+        var specs = List.empty[Specification]
+        val stmts = ListBuffer[Statement]()
+        for (piece <- pieces) {
+          piece match {
+            case BlockAnnotationPiece(s) => specs = specs ++ s
+            case BlockStatementPiece(s) => {
+              specs match {
+                case Nil => stmts += s
+                case _ => {
+                  stmts += s.withSpecifications(specs ++ s.specifications)
+                  specs = Nil
+                }
+              }
+            }
+          }
+        }
+
+        PyBlockStatement(stmts.toList, span, Nil, specs)
+    })
 
   private def blockPiece[_: P]: P[BlockPiece] =
     P(concreteStatement.map(BlockStatementPiece(_)) | annotation.map(BlockAnnotationPiece(_)))
