@@ -5,24 +5,24 @@ trait Expressions extends Types {
   import BinaryOperator._
 
   val operators: Map[String, (Int, BinaryOperator)] = Map(
-    "||" -> (1,  LogicalOr),
-    "&&" -> (2,  LogicalAnd),
-    "|"  -> (3,  BitwiseOr),
-    "^"  -> (4,  BitwiseXor),
-    "&"  -> (5,  BitwiseAnd),
-    "==" -> (6,  Equal),
-    "!=" -> (6,  NotEqual),
-    "<"  -> (7,  Less),
-    "<=" -> (7,  LessEqual),
-    ">=" -> (7,  GreaterEqual),
-    ">"  -> (7,  Greater),
-    "<<" -> (8,  ShiftLeft),
-    ">>" -> (8,  ShiftRight),
-    "+"  -> (9,  Add),
-    "-"  -> (9,  Subtract),
-    "*"  -> (10,  Multiply),
-    "/"  -> (10,  Divide),
-    "%"  -> (10,  Modulus),
+    //"||" -> (1,  LogicalOr),
+    //"&&" -> (2,  LogicalAnd),
+    "BitwiseOr"  -> (3,  BitwiseOr),
+    "BitwiseXor"  -> (4,  BitwiseXor),
+    "BitwiseAnd"  -> (5,  BitwiseAnd),
+    "Eq" -> (6,  Equal),
+    "Neq" -> (6,  NotEqual),
+    "Lt"  -> (7,  Less),
+    "Le" -> (7,  LessEqual),
+    "Ge" -> (7,  GreaterEqual),
+    "Gt"  -> (7,  Greater),
+    "ShiftLeft" -> (8,  ShiftLeft),
+    "ShiftRight" -> (8,  ShiftRight),
+    //"+"  -> (9,  Add),
+    "Minus"  -> (9,  Subtract),
+    //"*"  -> (10,  Multiply),
+    "Div"  -> (10,  Divide),
+    "Mod"  -> (10,  Modulus),
   )
 
   def expression[_: P]: P[Expression] =
@@ -93,10 +93,10 @@ trait Expressions extends Types {
   def parsePrefixOp(op: String): UnaryOperator.Value = {
     import UnaryOperator._
     op match {
-      case "*" => Deref
-      case "-" => Negate
-      case "!" => Not
-      case "~" => BitwiseNot
+      //case "*" => Deref
+      //case "-" => Negate
+      case "Not" => Not
+      case "BitwiseNot" => BitwiseNot
     }
   }
 
