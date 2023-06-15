@@ -428,8 +428,8 @@ object Resolver {
         val right = resolveExpression(binary.right, scope, context)
 
         binary.operator match {
-          case BinaryOperator.Add =>
-            ResolvedArithmetic(binary, left, right, ArithmeticOperation.Add)
+          // case BinaryOperator.Add =>
+          //   ResolvedArithmetic(binary, left, right, ArithmeticOperation.Add)
           case BinaryOperator.Subtract =>
             ResolvedArithmetic(
               binary,
@@ -439,13 +439,13 @@ object Resolver {
             )
           case BinaryOperator.Divide =>
             ResolvedArithmetic(binary, left, right, ArithmeticOperation.Divide)
-          case BinaryOperator.Multiply =>
-            ResolvedArithmetic(
-              binary,
-              left,
-              right,
-              ArithmeticOperation.Multiply
-            )
+          // case BinaryOperator.Multiply =>
+          //   ResolvedArithmetic(
+          //     binary,
+          //     left,
+          //     right,
+          //     ArithmeticOperation.Multiply
+          //   )
           case BinaryOperator.Equal =>
             ResolvedComparison(binary, left, right, ComparisonOperation.EqualTo)
           case BinaryOperator.NotEqual =>
@@ -502,16 +502,16 @@ object Resolver {
         unary.operator match {
           case UnaryOperator.Not =>
             ResolvedNot(unary, resolveExpression(unary.operand, scope, context))
-          case UnaryOperator.Negate =>
-            ResolvedNegation(
-              unary,
-              resolveExpression(unary.operand, scope, context)
-            )
-          case UnaryOperator.Deref =>
-            ResolvedDereference(
-              unary,
-              resolveExpression(unary.operand, scope, context)
-            )
+          // case UnaryOperator.Negate =>
+          //   ResolvedNegation(
+          //     unary,
+          //     resolveExpression(unary.operand, scope, context)
+          //   )
+          // case UnaryOperator.Deref =>
+          //   ResolvedDereference(
+          //     unary,
+          //     resolveExpression(unary.operand, scope, context)
+          //   )
           case op => {
             // Log the error and return the base expression
             scope.errors.error(unary, "Unsupported operator " + op.toString())

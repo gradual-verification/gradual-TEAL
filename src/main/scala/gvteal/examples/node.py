@@ -1,8 +1,3 @@
-struct Node {
-  int value;
-  struct Node* next;
-};
-
 """@
 predicate wrappedAcc(struct Node *node) = ? && acc(node->value) && acc(node->next);
 @"""

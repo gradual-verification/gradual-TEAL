@@ -206,6 +206,7 @@ case class MethodDefinition(
   span: SourceSpan
 ) extends Definition
 
+// PyTEAL N-Ary Ops
 object NaryOperator extends Enumeration {
   type NaryOperator = Value
   val LogicalOrNary = Value("Or")
