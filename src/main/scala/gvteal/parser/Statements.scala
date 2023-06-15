@@ -12,6 +12,7 @@ trait Statements extends Specifications {
 
   def concreteStatement[_: P]: P[Statement] =
     P(
+      pyBlockStatement |
       blockStatement |
       ifStatement |
       whileStatement |
