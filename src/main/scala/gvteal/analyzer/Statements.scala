@@ -78,3 +78,9 @@ case class ResolvedBlock(
   variableDefs: List[ResolvedVariable],
   statements: List[ResolvedStatement]
 ) extends ResolvedStatement
+
+case class ResolvedPyBlock(
+  parsed: Statement, 
+  variableDefs: List[ResolvedPyVariable],
+  statements: List[ResolvedStatement]
+)

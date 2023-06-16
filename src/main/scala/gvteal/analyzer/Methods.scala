@@ -11,6 +11,15 @@ case class ResolvedMethodDeclaration(
     library: Boolean = false,
 ) extends ResolvedNode
 
+case class ResolvedFunctionDeclaration(
+  parsed: FunctionDefinition,
+  name: String,
+  arguments: List[ResolvedPyVariable], 
+  precondition: Option[ResolvedExpression],
+  postcondition: Option[ResolvedExpression],
+  library: Boolean = false,
+) extends ResolvedNode
+
 case class ResolvedMethodDefinition(
     parsed: MethodDefinition,
     declaration: ResolvedMethodDeclaration,
@@ -18,6 +27,12 @@ case class ResolvedMethodDefinition(
 ) extends ResolvedNode {
   def name = declaration.name
 }
+
+case class ResolvedFunctionDefinition(
+  parsed: FunctionDefinition,
+  declaration: ResolvedFunctionDeclaration,
+  body: ResolvedPyBlock
+)
 
 case class ResolvedPredicateDeclaration(
     parsed: PredicateDefinition,
