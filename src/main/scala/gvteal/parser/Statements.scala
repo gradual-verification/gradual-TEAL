@@ -32,11 +32,6 @@ trait Statements extends Specifications {
   private sealed trait PyBlockPiece
   private case class PyBlockStatementPiece(s: Statement) extends BlockPiece
 
-  // TODO: Python block piece logic for whitespace parsing [Whitespace scoping parsing](https://jayconrod.com/posts/101/how-python-parses-white-space)
-
-  // PyTEAL blocks
-  // TODO: Figure out if block pieces are the same? Probably not, we have to do the same thing Python does by parsing whitespace scoping
-
   private def blockPiece[_: P]: P[BlockPiece] =
     P(concreteStatement.map(BlockStatementPiece(_)) | annotation.map(BlockAnnotationPiece(_)))
 
