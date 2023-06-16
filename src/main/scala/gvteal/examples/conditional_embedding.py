@@ -4,10 +4,10 @@ def test(i):
   
   # The condition (\result > 0) should be embedded in the if;
   # no temporary variable should be used
-  return i
+  return i}
 
 def main():
-  return test(1)
+  return test(1)}
 
 # Original C0 Code:
 # int test(int input)
