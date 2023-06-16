@@ -12,6 +12,8 @@ trait ResolvedNode {
 
 case class ResolvedProgram(
     methodDeclarations: List[ResolvedMethodDeclaration],
+    // functionDefinitions: List[ResolvedFunctionDefinition],
+    // functionDeclarations: List[ResolvedFunctionDeclaration],
     methodDefinitions: List[ResolvedMethodDefinition],
     predicateDeclarations: List[ResolvedPredicateDeclaration],
     predicateDefinitions: List[ResolvedPredicateDefinition],
@@ -23,6 +25,8 @@ case class ResolvedProgram(
 case class Scope(
     variables: Map[String, ResolvedVariable],
     methodDeclarations: Map[String, ResolvedMethodDeclaration],
+    // functionDefinitions: Map[String, ResolvedFunctionDefinition],
+    // functionDeclarations: Map[String, ResolvedFunctionDeclaration],
     methodDefinitions: Map[String, ResolvedMethodDefinition],
     predicateDeclarations: Map[String, ResolvedPredicateDeclaration],
     predicateDefinitions: Map[String, ResolvedPredicateDefinition],
@@ -83,6 +87,29 @@ case class Scope(
       copy(methodDefinitions = methodDefinitions + (method.name -> method))
     }
   }
+
+  // def defineFunction(function: ResolvedFunctionDefinition): Scope = {
+  //   if (functionDefinitions.contains(function.name)) {
+  //     errors.error(function.parsed, "'", + function.name + "' is already defined")
+  //     this 
+  //   } else {
+  //     if(typeDefs.contains(function.name)) {
+  //       errors.error(
+  //         function.parsed,
+  //         "Function '" + function.name + "' already uses a type name"
+  //       )
+  //     }
+  //     copy(functionDefinitions = functionDefinitions + (function.name -> function))
+  //   }
+  // }
+
+  // def declareFunction(function: ResolvedFunctionDeclaration): Scope = {
+  //   if (functionDeclarations.contains(function.name)) {
+  //     this
+  //   } else {
+  //     copy(functionDeclarations = functionDeclarations + (function.name -> function))
+  //   }
+  // }
 
   def declarePredicate(predicate: ResolvedPredicateDeclaration): Scope = {
     if (predicateDeclarations.contains(predicate.name)) this
@@ -423,6 +450,15 @@ object Resolver {
         return resolveExpression(increment.value, scope, context)
       }
 
+      // case pyBinary: PyBinaryExpression => {
+      //   val left = resolveExpression(pyBinary.left, scope, context)
+      //   val right = resolveExpression(pyBinary.right, scope, context)
+
+      //   pyBinary.operator match {
+      //     case PyBinaryOperator.
+      //   }
+      // }
+
       case binary: BinaryExpression => {
         val left = resolveExpression(binary.left, scope, context)
         val right = resolveExpression(binary.right, scope, context)
@@ -502,16 +538,16 @@ object Resolver {
         unary.operator match {
           case UnaryOperator.Not =>
             ResolvedNot(unary, resolveExpression(unary.operand, scope, context))
-          case UnaryOperator.Negate =>
-            ResolvedNegation(
-              unary,
-              resolveExpression(unary.operand, scope, context)
-            )
-          case UnaryOperator.Deref =>
-            ResolvedDereference(
-              unary,
-              resolveExpression(unary.operand, scope, context)
-            )
+          // case UnaryOperator.Negate =>
+          //   ResolvedNegation(
+          //     unary,
+          //     resolveExpression(unary.operand, scope, context)
+          //   )
+          // case UnaryOperator.Deref =>
+          //   ResolvedDereference(
+          //     unary,
+          //     resolveExpression(unary.operand, scope, context)
+          //   )
           case op => {
             // Log the error and return the base expression
             scope.errors.error(unary, "Unsupported operator " + op.toString())
@@ -838,6 +874,14 @@ object Resolver {
     args.map(arg =>
       ResolvedVariable(arg, arg.id.name, resolveType(arg.valueType, scope)))
 
+  // TODO: Finish resolveFunctionDeclaration and resolveFunctionDefinition
+  // def resolveFunctionDeclaration(
+  //   input: FunctionDefinition, 
+  //   scope: Scope
+  // ): ResolvedFunctionDeclaration = {
+  // //   val parameters = resolveFunctionAr
+  // // }
+
   def resolveMethodDeclaration(
       input: MethodDefinition,
       scope: Scope
@@ -960,6 +1004,8 @@ object Resolver {
       variables = Map.empty,
       methodDeclarations = Map.empty,
       methodDefinitions = Map.empty,
+      // functionDefinitions = Map.empty,
+      // functionDeclarations = Map.empty,
       predicateDeclarations = Map.empty,
       predicateDefinitions = Map.empty,
       structDefinitions = Map.empty,
@@ -979,6 +1025,8 @@ object Resolver {
   ): (Scope, ResolvedProgram) = {
     val methodDeclarations = ListBuffer[ResolvedMethodDeclaration]()
     val methodDefinitions = ListBuffer[ResolvedMethodDefinition]()
+    // val functionDefinitions = ListBuffer[ResolvedFunctionDefinition]()
+    // val functionDeclarations = ListBuffer[ResolvedFunctionDeclaration]()
     val predicateDeclarations = ListBuffer[ResolvedPredicateDeclaration]()
     val predicateDefinitions = ListBuffer[ResolvedPredicateDefinition]()
     val structDefinitions = ListBuffer[ResolvedStructDefinition]()
@@ -1064,6 +1112,18 @@ object Resolver {
             scope = scope.defineMethod(definition)
           }
         }
+
+        // case f: FunctionDefinition => {
+        //   val decl = resolveFunctionDeclaration(f, scope)
+        //   functionDeclarations += decl
+        //   scope = scope.declareFunction(decl)
+
+        //   if(f.body.isDefined) {
+        //     val definition = resolveFunctionDefinition(f, decl, scope)
+        //     functionDefinitions += definition
+        //     scope = scope.defineFunction(definition)
+        //   }
+        // }
 
         case p: PredicateDefinition => {
           val decl = resolvePredicateDeclaration(p, scope)

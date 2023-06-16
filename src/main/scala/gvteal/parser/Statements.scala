@@ -13,6 +13,7 @@ trait Statements extends Specifications {
   def concreteStatement[_: P]: P[Statement] =
     P(
       blockStatement |
+      pyBlockStatement |
       ifStatement |
       whileStatement |
       forStatement |
@@ -25,6 +26,12 @@ trait Statements extends Specifications {
   private sealed trait BlockPiece
   private case class BlockStatementPiece(s: Statement) extends BlockPiece
   private case class BlockAnnotationPiece(s: Seq[Specification]) extends BlockPiece
+
+  // !URGENT
+  // TODO: Python block pieces
+  private sealed trait PyBlockPiece
+  private case class PyBlockStatementPiece(s: Statement) extends PyBlockPiece
+  private case class PyBlockAnnotationPiece(s: Seq[Specification]) extends PyBlockPiece
 
   private def blockPiece[_: P]: P[BlockPiece] =
     P(concreteStatement.map(BlockStatementPiece(_)) | annotation.map(BlockAnnotationPiece(_)))
@@ -51,6 +58,41 @@ trait Statements extends Specifications {
         }
 
         BlockStatement(stmts.toList, span, Nil, specs)
+    })
+  
+  // TODO: [Logic for whitespace counting](https://github.com/python/cpython/blob/main/Parser/tokenizer.c)
+
+  """
+  - List of whitespace characters List[Indents]
+  - End of a pyBlock is when Current Line List[Indent] < Previous Line List[Indent]
+    - Whenever we see a `\n` we count current occurences of "indents" (whitespace) before a character and compare at the next 
+    - If at next, prev > next, then that's the body end
+  - Does this have to be done in the Lexer? Yes (maybe)
+  """
+  private def pyBlockPiece[_: P]: P[PyBlockPiece] = 
+    P(concreteStatement.map(PyBlockStatementPiece(_)) | annotation.map(PyBlockAnnotationPiece(_)))
+
+  def pyBlockStatement[_: P]: P[PyBlockStatement] =
+    P(span(":" ~ pyBlockPiece.rep ~ "}"))
+    .map({
+      case (pieces, span) =>
+        var specs = List.empty[Specification]
+        val stmts = ListBuffer[Statement]()
+        for (piece <- pieces) {
+          piece match {
+            case PyBlockAnnotationPiece(s) => specs = specs ++ s
+            case PyBlockStatementPiece(s) => {
+              specs match {
+                case Nil => stmts += s
+                case _ => {
+                  stmts += s.withSpecifications(specs ++ s.specifications)
+                  specs = Nil
+                }
+              }
+            }
+          }
+        }
+        PyBlockStatement(stmts.toList, span, Nil, specs)
     })
 
   def ifStatement[_: P]: P[IfStatement] =

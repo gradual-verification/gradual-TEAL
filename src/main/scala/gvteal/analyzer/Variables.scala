@@ -8,3 +8,8 @@ case class ResolvedVariable(
   name: String,
   valueType: ResolvedType,
 ) extends ResolvedNode
+
+case class ResolvedPyVariable(
+  parsed: Node,
+  name: String
+) extends ResolvedNode

@@ -1,8 +1,3 @@
-struct Node {
-  int value;
-  struct Node* next;
-};
-
 """@
 predicate wrappedAcc(struct Node *node) = ? && acc(node->value) && acc(node->next);
 @"""
@@ -14,7 +9,7 @@ int sumNodes(struct Node* a, struct Node* b, struct Node* c)
     #@unfold wrappedAcc(a);
     #@unfold wrappedAcc(b);
     #@unfold wrappedAcc(c);
-    int sum = a->value + b->value + c->value;
+    int sum = Add(a->value, b->value, c->value);
     #@fold wrappedAcc(a);
     #@fold wrappedAcc(b);
     #@fold wrappedAcc(c);

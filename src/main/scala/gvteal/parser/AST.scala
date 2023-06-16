@@ -25,8 +25,11 @@ case class ArrayType(valueType: Type, span: SourceSpan) extends Type
 sealed trait Expression extends Node
 case class VariableExpression(variable: Identifier, span: SourceSpan) extends Expression
 case class IncrementExpression(value: Expression, operator: IncrementOperator, span: SourceSpan) extends Expression
+//case class PyNaryExpression
 case class BinaryExpression(left: Expression, operator: BinaryOperator.Value, right: Expression, span: SourceSpan) extends Expression
+case class PyBinaryExpression(left: Expression, operator: PyBinaryOperator.Value, right: Expression, span: SourceSpan)
 case class UnaryExpression(operand: Expression, operator: UnaryOperator.Value, span: SourceSpan) extends Expression
+case class PyUnaryExpression(operand: Expression, operator: PyUnaryOperator.Value, span: SourceSpan) extends Expression
 case class TernaryExpression(condition: Expression, ifTrue: Expression, ifFalse: Expression, span: SourceSpan) extends Expression
 case class InvokeExpression(method: Identifier, arguments: List[Expression], span: SourceSpan) extends Expression
 case class AllocExpression(valueType: Type, span: SourceSpan) extends Expression
@@ -170,9 +173,19 @@ case class BlockStatement(
 ) extends Statement {
   def withSpecifications(specs: List[Specification]): BlockStatement = copy(specifications = specs)
 }
+// TODO: Keep track of indent information
+case class PyBlockStatement(
+  body: List[Statement],
+  span: SourceSpan,
+  specifications: List[Specification],
+  trailingSpecifications: List[Specification]
+) extends Statement {
+  def withSpecifications(specs: List[Specification]): PyBlockStatement = copy(specifications = specs)
+}
 
 // Definitions
 sealed trait Definition extends Node
+case class FncMemberDefinition(id: Identifier, span: SourceSpan) extends Node
 case class MemberDefinition(id: Identifier, valueType: Type, span: SourceSpan) extends Node
 case class TypeDefinition(id: Identifier, value: Type, span: SourceSpan) extends Definition
 case class StructDefinition(id: Identifier, fields: Option[List[MemberDefinition]], span: SourceSpan) extends Definition
@@ -192,6 +205,64 @@ case class MethodDefinition(
   specifications: List[Specification],
   span: SourceSpan
 ) extends Definition
+case class FunctionDefinition(
+  id: Identifier,
+  // returnType: Type, (Type infernece in typed AST)
+  arguments: List[FncMemberDefinition],
+  body: Option[BlockStatement],
+  specifications: List[Specification],
+  span: SourceSpan
+) extends Definition
+
+
+// pyTEAL N-Ary Ops
+object PyNaryOperator extends Enumeration {
+  type PyNaryOperator = Value
+  val LogicalOrNary = Value("Or")
+  val LogicalAndNary = Value("And")
+  val AddNary = Value("Add")
+  val MulNary = Value("Mul")
+  val ConcatNary = Value("Concat")
+}
+
+// pyTEAL Binary Ops
+object PyBinaryOperator extends Enumeration {
+  type PyBinaryOperator = Value
+
+  val PyBitwiseOr = Value("BitwiseOr")
+  val PyBitwiseXor = Value("BitwiseXor")
+  val PyBitwiseAnd = Value("BitwiseAnd")
+  val PyEqual = Value("Eq")
+  val PyNotEqual = Value("Neq")
+  val PyLess = Value("Lt")
+  val PyLessEqual = Value("Le")
+  val PyGreaterEqual = Value("Ge")
+  val PyGreater = Value("Gt")
+  val PyShiftLeft = Value("ShiftLeft")
+  val PyShiftRight = Value("ShiftRight")
+  val PySubtract = Value("Minus")
+  val PyDivide = Value("Div")
+  val PyModulus = Value("Mod")
+  val PyGetBit = Value("GetBit")
+  val PyGetByte = Value("GetByte")
+  val PyBytesAdd = Value("BytesAdd")
+  val PyBytesMinus = Value("BytesMinus")
+  val PyBytesDiv = Value("BytesDiv")
+  val PyBytesMul = Value("BytesMul")
+  val PyBytesMod = Value("BytesMod")
+  val PyBytesAnd = Value("BytesAnd")
+  val PyBytesOr = Value("BytesOr")
+  val PyBytesXor = Value("BytesXor")
+  val PyBytesEq = Value("BytesEq")
+  val PyBytesNeq = Value("BytesNeq")
+  val PyBytesLt = Value("BytesLt")
+  val PyBytesLe = Value("BytesLe")
+  val PyBytesGt = Value("BytesGt")
+  val PyBytesGe = Value("BytesGe")
+  val PyExtractUnit16 = Value("ExtractUnit16")
+  val PyExtractUnit32 = Value("ExtractUnit32")
+  val PyExtractUnit64 = Value("ExtractUnit64")
+}
 
 object BinaryOperator extends Enumeration {
   type BinaryOperator = Value
@@ -214,6 +285,28 @@ object BinaryOperator extends Enumeration {
   val Multiply = Value("*")
   val Divide = Value("/")
   val Modulus = Value("%")
+}
+
+// pyTEAL Unary Ops
+object PyUnaryOperator extends Enumeration {
+  type PyUnaryOperator = Value
+  val Not = Value("Not")
+  val BitwiseNot = Value("BitwiseNot")
+  val Btoi = Value("Btoi")
+  val Itob = Value("Itob")
+  val Len = Value("Len")
+  val BitLen = Value("BitLen")
+  val Sha256 = Value("Sha256")
+  val Sqrt = Value("Sqrt")
+  val Pop = Value("Pop")
+  val Balance = Value("Balance")
+  val MinBalance = Value("MinBalance")
+  val BytesNot = Value("BytesNot")
+  val BytesSqrt = Value("BytesSqrt")
+  val BytesZero = Value("BytesZero")
+  val Log = Value("Log")
+  //TODO: sha512_256, Sha3_256
+
 }
 
 object UnaryOperator extends Enumeration {
