@@ -13,6 +13,7 @@ trait Statements extends Specifications {
   def concreteStatement[_: P]: P[Statement] =
     P(
       blockStatement |
+      pyBlockStatement |
       ifStatement |
       whileStatement |
       forStatement |
@@ -22,41 +23,19 @@ trait Statements extends Specifications {
       (simpleStatement ~/ ";")
     )
 
-  // !URGENT
-  // TODO: Python block pieces
   private sealed trait BlockPiece
   private case class BlockStatementPiece(s: Statement) extends BlockPiece
   private case class BlockAnnotationPiece(s: Seq[Specification]) extends BlockPiece
 
+  // !URGENT
+  // TODO: Python block pieces
+  private sealed trait PyBlockPiece
+  private case class PyBlockStatementPiece(s: Statement) extends BlockPiece
+
   // TODO: Python block piece logic for whitespace parsing [Whitespace scoping parsing](https://jayconrod.com/posts/101/how-python-parses-white-space)
-  // private def pyBlockPiece[_: P]: P[PyBlockPiece] = 
-  //   P(concreteStatement.map(BlockStatementPiece(_))) | annotation.map(BlockAnnotationPiece(_)) 
 
   // PyTEAL blocks
   // TODO: Figure out if block pieces are the same? Probably not, we have to do the same thing Python does by parsing whitespace scoping
-  // def pyBlockStatement[_: P]: P[PyBlockStatement] = 
-  //   P(span(":" ~ pyBlockPiece.rep))
-  //   .map({
-  //     case (pieces, span) =>
-  //       var specs = List.empty[Specification]
-  //       val stmts = ListBuffer[Statement]()
-  //       for (piece <- pieces) {
-  //         piece match {
-  //           case BlockAnnotationPiece(s) => specs = specs ++ s
-  //           case BlockStatementPiece(s) => {
-  //             specs match {
-  //               case Nil => stmts += s
-  //               case _ => {
-  //                 stmts += s.withSpecifications(specs ++ s.specifications)
-  //                 specs = Nil
-  //               }
-  //             }
-  //           }
-  //         }
-  //       }
-
-  //       PyBlockStatement(stmts.toList, span, Nil, specs)
-  //   })
 
   private def blockPiece[_: P]: P[BlockPiece] =
     P(concreteStatement.map(BlockStatementPiece(_)) | annotation.map(BlockAnnotationPiece(_)))
@@ -83,6 +62,40 @@ trait Statements extends Specifications {
         }
 
         BlockStatement(stmts.toList, span, Nil, specs)
+    })
+  
+  // TODO: [Logic for whitespace counting](https://github.com/python/cpython/blob/main/Parser/tokenizer.c)
+
+  private def pyBlockPiece[_: P]: P[PyBlockPiece] = 
+    P(concreteStatement.map(PyBlockStatement(_)) | annotation.map(BlockAnnotationPiece(_)))
+
+  """
+  - List of whitespace characters List[Indents]
+  - End of a pyBlock is when Current Line List[Indent] < Previous Line List[Indent]
+    - Whenever we see a `\n` we count current occurences of "indents" (whitespace) before a character and compare at the next 
+    - If at next, prev > next, then that's the body end
+  - Does this have to be done in the Lexer? Yes (maybe)
+  """
+  def pyBlockStatement[_: P]: P[PyBlockStatement] =
+    P(span(":" ~ pyBlockPiece.rep ~ LOGIC_THING))
+    .map({
+      case (pieces, span) =>
+      var specs = List.empty[Specification]
+      val stmts = ListBuffer[Statement]()
+      for(piece <- pieces) {
+        piece match {
+          case BlockAnnotationPiece(s) => specs = specs ++ s
+          case PyBlockStatementPiece(s) => {
+            specs match {
+              case Nil => stmts += s 
+              case _ => {
+                stmts += s.withSpecifications(specs ++ s.specifications)
+                specs = Nil
+              }
+            }
+          }
+        }
+      }
     })
 
   def ifStatement[_: P]: P[IfStatement] =
