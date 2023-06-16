@@ -51,7 +51,7 @@ trait Expressions extends Types {
 
   def binaryExpression[_: P]: P[Expression] =
       P(basicExpression ~ (binaryOperator.! ~ basicExpression).rep).map {
-        case (cur, rest) => pyParseOpPrecedence(cur, rest)
+        case (cur, rest) => parseOpPrecedence(cur, rest)
       }
 
   // def pyBinaryExpression[_: P]: P[Expression] =
