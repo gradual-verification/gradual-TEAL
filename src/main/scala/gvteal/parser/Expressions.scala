@@ -6,20 +6,20 @@ trait Expressions extends Types {
   import PyBinaryOperator._
 
   val pyOperators: Map[String, (Int, PyBinaryOperator)] = Map(
-    "BitwiseOr"  -> (3,  PyBitwiseOr),
+    "BitwiseOr"   -> (3,  PyBitwiseOr),
     "BitwiseXor"  -> (4,  PyBitwiseXor),
     "BitwiseAnd"  -> (5,  PyBitwiseAnd),
-    "Eq" -> (6,  PyEqual),
-    "Neq" -> (6,  PyNotEqual),
-    "Lt"  -> (7,  PyLess),
-    "Le" -> (7,  PyLessEqual),
-    "Ge" -> (7,  PyGreaterEqual),
-    "Gt"  -> (7,  PyGreater),
-    "ShiftLeft" -> (8,  PyShiftLeft),
-    "ShiftRight" -> (8,  PyShiftRight),
-    "Minus"  -> (9,  PySubtract),
-    "Div"  -> (10,  PyDivide),
-    "Mod"  -> (10,  PyModulus),
+    "Eq"          -> (6,  PyEqual),
+    "Neq"         -> (6,  PyNotEqual),
+    "Lt"          -> (7,  PyLess),
+    "Le"          -> (7,  PyLessEqual),
+    "Ge"          -> (7,  PyGreaterEqual),
+    "Gt"          -> (7,  PyGreater),
+    "ShiftLeft"   -> (8,  PyShiftLeft),
+    "ShiftRight"  -> (8,  PyShiftRight),
+    "Minus"       -> (9,  PySubtract),
+    "Div"         -> (10,  PyDivide),
+    "Mod"         -> (10,  PyModulus),
   )
 
   val operators: Map[String, (Int, BinaryOperator)] = Map(

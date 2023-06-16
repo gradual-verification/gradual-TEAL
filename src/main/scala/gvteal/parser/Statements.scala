@@ -13,7 +13,7 @@ trait Statements extends Specifications {
   def concreteStatement[_: P]: P[Statement] =
     P(
       blockStatement |
-      pyBlockStatement |
+      // pyBlockStatement |
       ifStatement |
       whileStatement |
       forStatement |
@@ -66,8 +66,8 @@ trait Statements extends Specifications {
   
   // TODO: [Logic for whitespace counting](https://github.com/python/cpython/blob/main/Parser/tokenizer.c)
 
-  private def pyBlockPiece[_: P]: P[PyBlockPiece] = 
-    P(concreteStatement.map(PyBlockStatement(_)) | annotation.map(BlockAnnotationPiece(_)))
+  // private def pyBlockPiece[_: P]: P[PyBlockPiece] = 
+  //   P(concreteStatement.map(PyBlockStatement(_)) | annotation.map(BlockAnnotationPiece(_)))
 
   """
   - List of whitespace characters List[Indents]
@@ -76,27 +76,27 @@ trait Statements extends Specifications {
     - If at next, prev > next, then that's the body end
   - Does this have to be done in the Lexer? Yes (maybe)
   """
-  def pyBlockStatement[_: P]: P[PyBlockStatement] =
-    P(span(":" ~ pyBlockPiece.rep ~ LOGIC_THING))
-    .map({
-      case (pieces, span) =>
-      var specs = List.empty[Specification]
-      val stmts = ListBuffer[Statement]()
-      for(piece <- pieces) {
-        piece match {
-          case BlockAnnotationPiece(s) => specs = specs ++ s
-          case PyBlockStatementPiece(s) => {
-            specs match {
-              case Nil => stmts += s 
-              case _ => {
-                stmts += s.withSpecifications(specs ++ s.specifications)
-                specs = Nil
-              }
-            }
-          }
-        }
-      }
-    })
+  // def pyBlockStatement[_: P]: P[PyBlockStatement] =
+  //   P(span(":" ~ pyBlockPiece.rep ~ LOGIC_THING))
+  //   .map({
+  //     case (pieces, span) =>
+  //     var specs = List.empty[Specification]
+  //     val stmts = ListBuffer[Statement]()
+  //     for (piece <- pieces) {
+  //       piece match {
+  //         case BlockAnnotationPiece(s) => specs = specs ++ s
+  //         case PyBlockStatementPiece(s) => {
+  //           specs match {
+  //             case Nil => stmts += s 
+  //             case _ => {
+  //               stmts += s.withSpecifications(specs ++ s.specifications)
+  //               specs = Nil
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   })
 
   def ifStatement[_: P]: P[IfStatement] =
     P(span(kw("if") ~ "(" ~ expression ~ ")" ~ statement ~ ("else" ~ statement).?)).map({
