@@ -6,20 +6,20 @@ trait Expressions extends Types {
   import PyBinaryOperator._
 
   val pyOperators: Map[String, (Int, PyBinaryOperator)] = Map(
-    "BitwiseOr"  -> (3,  PyBitwiseOr),
+    "BitwiseOr"   -> (3,  PyBitwiseOr),
     "BitwiseXor"  -> (4,  PyBitwiseXor),
     "BitwiseAnd"  -> (5,  PyBitwiseAnd),
-    "Eq" -> (6,  PyEqual),
-    "Neq" -> (6,  PyNotEqual),
-    "Lt"  -> (7,  PyLess),
-    "Le" -> (7,  PyLessEqual),
-    "Ge" -> (7,  PyGreaterEqual),
-    "Gt"  -> (7,  PyGreater),
-    "ShiftLeft" -> (8,  PyShiftLeft),
-    "ShiftRight" -> (8,  PyShiftRight),
-    "Minus"  -> (9,  PySubtract),
-    "Div"  -> (10,  PyDivide),
-    "Mod"  -> (10,  PyModulus),
+    "Eq"          -> (6,  PyEqual),
+    "Neq"         -> (6,  PyNotEqual),
+    "Lt"          -> (7,  PyLess),
+    "Le"          -> (7,  PyLessEqual),
+    "Ge"          -> (7,  PyGreaterEqual),
+    "Gt"          -> (7,  PyGreater),
+    "ShiftLeft"   -> (8,  PyShiftLeft),
+    "ShiftRight"  -> (8,  PyShiftRight),
+    "Minus"       -> (9,  PySubtract),
+    "Div"         -> (10,  PyDivide),
+    "Mod"         -> (10,  PyModulus),
   )
 
   val operators: Map[String, (Int, BinaryOperator)] = Map(
@@ -51,8 +51,40 @@ trait Expressions extends Types {
 
   def binaryExpression[_: P]: P[Expression] =
       P(basicExpression ~ (binaryOperator.! ~ basicExpression).rep).map {
-        case (cur, rest) => parseOpPrecedence(cur, rest)
+        case (cur, rest) => pyParseOpPrecedence(cur, rest)
       }
+
+  // def pyBinaryExpression[_: P]: P[Expression] =
+  //     P(basicExpression ~ (binaryOperator.! ~ basicExpression).rep).map {
+  //       case (cur, rest) => parseOpPrecedence(cur, rest)
+  //     }
+  
+//   def pyParseOpPrecedence(current: Expression, rest: Seq[(String, Expression)]): Expression = {
+//   // Operator precedence climbing algorithm
+//   // Based on https://github.com/databricks/sjsonnet/blob/master/sjsonnet/src/sjsonnet/Parser.scala#L156-L200
+//   var remaining = rest
+//   def climb(minPrec: Int, current: Expression): Expression = {
+//     var result = current
+//     while (
+//       remaining.headOption match {
+//         case None => false
+//         case Some((op, next)) =>
+//           val (prec, binOp) = pyOperators(op)
+//           if (prec < minPrec) false
+//           else {
+//             remaining = remaining.tail
+//             val rhs = climb(prec + 1, next)
+//             result = PyBinaryExpression(result, binOp, rhs, SourceSpan(result.span.start, rhs.span.end))
+//             true
+//           }
+//       }
+//     )()
+
+//     result
+//   }
+
+//   climb(0, current)
+// }
 
   def parseOpPrecedence(current: Expression, rest: Seq[(String, Expression)]): Expression = {
     // Operator precedence climbing algorithm
