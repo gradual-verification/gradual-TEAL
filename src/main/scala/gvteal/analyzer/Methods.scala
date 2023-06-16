@@ -28,11 +28,11 @@ case class ResolvedMethodDefinition(
   def name = declaration.name
 }
 
-case class ResolvedFunctionDefinition(
-  parsed: FunctionDefinition,
-  declaration: ResolvedFunctionDeclaration,
-  body: ResolvedPyBlock
-)
+// case class ResolvedFunctionDefinition(
+//   parsed: FunctionDefinition,
+//   declaration: ResolvedFunctionDeclaration,
+//   body: ResolvedPyBlock
+// )
 
 case class ResolvedPredicateDeclaration(
     parsed: PredicateDefinition,
