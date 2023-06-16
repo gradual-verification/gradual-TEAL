@@ -40,17 +40,6 @@ case class AccessibilityExpression(field: Expression, span: SourceSpan) extends 
 
 // TODO: (PyTEAL AST)[https://github.com/algorand/pyteal/blob/master/pyteal/ast]
 
-/*
-Transaction Types numerical value evaluation:
-Unknown => 0
-Payment => 1
-KeyRegistration => 2
-AssetConfig => 3
-AssetTransfer => 4
-AssetFreeze => 5
-ApplicationCall => 6
-*/
-
 // Literal expressions
 sealed trait LiteralExpression extends Expression {
   val raw: String
@@ -187,10 +176,8 @@ sealed trait Definition extends Node
 case class MemberDefinition(id: Identifier, valueType: Type, span: SourceSpan) extends Node
 case class TypeDefinition(id: Identifier, value: Type, span: SourceSpan) extends Definition
 case class StructDefinition(id: Identifier, fields: Option[List[MemberDefinition]], span: SourceSpan) extends Definition
+
 case class UseDeclaration(path: StringExpression, isLibrary: Boolean, span: SourceSpan) extends Definition
-case class ImportSimple(path: StringExpression, span: SourceSpan) extends Definition
-case class ImportFrom(name: StringExpression, functions: List[String], span: SourceSpan) extends Definition
-case class ImportFromAll(name: StringExpression, span: SourceSpan) extends Definition
 case class PredicateDefinition(
   id: Identifier,
   arguments: List[MemberDefinition],
