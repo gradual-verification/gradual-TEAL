@@ -6,20 +6,20 @@ trait Expressions extends Types {
   import PyBinaryOperator._
 
   val pyOperators: Map[String, (Int, PyBinaryOperator)] = Map(
-    "BitwiseOr"  -> (3,  BitwiseOr),
-    "BitwiseXor"  -> (4,  BitwiseXor),
-    "BitwiseAnd"  -> (5,  BitwiseAnd),
-    "Eq" -> (6,  Equal),
-    "Neq" -> (6,  NotEqual),
-    "Lt"  -> (7,  Less),
-    "Le" -> (7,  LessEqual),
-    "Ge" -> (7,  GreaterEqual),
-    "Gt"  -> (7,  Greater),
-    "ShiftLeft" -> (8,  ShiftLeft),
-    "ShiftRight" -> (8,  ShiftRight),
-    "Minus"  -> (9,  Subtract),
-    "Div"  -> (10,  Divide),
-    "Mod"  -> (10,  Modulus),
+    "BitwiseOr"  -> (3,  PyBitwiseOr),
+    "BitwiseXor"  -> (4,  PyBitwiseXor),
+    "BitwiseAnd"  -> (5,  PyBitwiseAnd),
+    "Eq" -> (6,  PyEqual),
+    "Neq" -> (6,  PyNotEqual),
+    "Lt"  -> (7,  PyLess),
+    "Le" -> (7,  PyLessEqual),
+    "Ge" -> (7,  PyGreaterEqual),
+    "Gt"  -> (7,  PyGreater),
+    "ShiftLeft" -> (8,  PyShiftLeft),
+    "ShiftRight" -> (8,  PyShiftRight),
+    "Minus"  -> (9,  PySubtract),
+    "Div"  -> (10,  PyDivide),
+    "Mod"  -> (10,  PyModulus),
   )
 
   val operators: Map[String, (Int, BinaryOperator)] = Map(
@@ -47,7 +47,7 @@ trait Expressions extends Types {
     P(binaryExpression ~ ("?" ~ expression ~ ":" ~ expression ~~ pos).?).map {
         case (a, None) => a
         case (a, Some((l, r, end))) => TernaryExpression(a, l, r, SourceSpan(a.span.start, end))
-      }
+    }
 
   def binaryExpression[_: P]: P[Expression] =
       P(basicExpression ~ (binaryOperator.! ~ basicExpression).rep).map {

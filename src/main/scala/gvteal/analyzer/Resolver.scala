@@ -423,6 +423,15 @@ object Resolver {
         return resolveExpression(increment.value, scope, context)
       }
 
+      // case pyBinary: PyBinaryExpression => {
+      //   val left = resolveExpression(pyBinary.left, scope, context)
+      //   val right = resolveExpression(pyBinary.right, scope, context)
+
+      //   pyBinary.operator match {
+      //     case PyBinaryOperator.
+      //   }
+      // }
+
       case binary: BinaryExpression => {
         val left = resolveExpression(binary.left, scope, context)
         val right = resolveExpression(binary.right, scope, context)
