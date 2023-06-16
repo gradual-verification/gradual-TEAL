@@ -184,6 +184,15 @@ case class BlockStatement(
 ) extends Statement {
   def withSpecifications(specs: List[Specification]): BlockStatement = copy(specifications = specs)
 }
+// TODO: Keep track of indent information
+case class PyBlockStatement(
+  body: List[Statement],
+  span: SourceSpan,
+  specifications: List[Specification],
+  trailingSpecifications: List[Specification]
+) extends Statement {
+  def withSpecifications(specs: List[Specification]): PyBlockStatement = copy(specifications = specs)
+}
 
 // Definitions
 sealed trait Definition extends Node
