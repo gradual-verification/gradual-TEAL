@@ -185,7 +185,7 @@ case class PyBlockStatement(
 
 // Definitions
 sealed trait Definition extends Node
-case class FncMemberDefinition(id: Identifier, span: SourceSpan) extends Node
+case class FunctionMemberDefinition(id: Identifier, span: SourceSpan) extends Node
 case class MemberDefinition(id: Identifier, valueType: Type, span: SourceSpan) extends Node
 case class TypeDefinition(id: Identifier, value: Type, span: SourceSpan) extends Definition
 case class StructDefinition(id: Identifier, fields: Option[List[MemberDefinition]], span: SourceSpan) extends Definition
@@ -208,7 +208,7 @@ case class MethodDefinition(
 case class FunctionDefinition(
   id: Identifier,
   // returnType: Type, (Type infernece in typed AST)
-  arguments: List[FncMemberDefinition],
+  arguments: List[FunctionMemberDefinition],
   body: Option[BlockStatement],
   specifications: List[Specification],
   span: SourceSpan
@@ -337,3 +337,6 @@ object AssignOperator extends Enumeration {
   val BitwiseOr = Value("|=")
   val BitwiseXor = Value("^=")
 }
+
+/* ============ PyTEAL Extension ============ */
+case class ImportDeclaration(path: StringExpression, isLibrary: Boolean, span: SourceSpan) extends Definition
