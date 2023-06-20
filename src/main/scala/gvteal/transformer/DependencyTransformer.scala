@@ -4,6 +4,7 @@ import gvteal.analyzer._
 object DependencyTransformer {
   // TODO: There should be a *lot* more checking of the validity of definitions
 
+  // PyTEAL: Remove dependencies
   def transform(program: IR.Program, dependency: IR.Dependency, input: ResolvedProgram): Unit = {
     if (input.methodDefinitions.nonEmpty)
       throw new TransformerException("Cannot include method definitions in dependencies")

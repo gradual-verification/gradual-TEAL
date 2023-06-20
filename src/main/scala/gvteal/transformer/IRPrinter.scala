@@ -25,9 +25,10 @@ object IRPrinter {
       }
     }
 
+    // PyTEAL: Change for imports; hardcoded
     def printDependency(dependency: IR.Dependency): Unit = {
-      p.print("#use ")
-      if (dependency.isLibrary) {
+      p.print("#import ")
+      if (true) {
         p.print("<" + dependency.path + ">")
       } else {
         p.print("\"" + dependency.path + "\"")

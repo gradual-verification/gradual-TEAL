@@ -72,7 +72,7 @@ object ImplementationValidator {
 
   @tailrec
   def collectLibraryMethods(
-      uses: List[ResolvedUseDeclaration],
+      uses: List[ResolvedImportDeclaration],
       errors: ErrorSink,
       methods: Set[String] = Set(),
       visitedLibraries: Set[String] = Set()

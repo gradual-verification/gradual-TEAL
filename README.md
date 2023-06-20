@@ -1,6 +1,5 @@
-# `gvc0`: Gradually Verified C0
-
-![Build](https://github.com/gradual-verification/gvc0/actions/workflows/build.yml/badge.svg)
+# `gradual-TEAL`: Gradually Verified TEAL
+> A [GVC0](https://github.com/gradual-verification/gvc0) Extension
 
 ## Setup
 

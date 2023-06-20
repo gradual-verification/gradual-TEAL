@@ -17,14 +17,14 @@ object IR {
       Helpers.findAvailableName(_structs, "OwnedFields")
     )
 
+    // PyTEAL: Remove Boolean for checking if it's a valid dependency
     def addDependency(
         path: String,
-        isLibrary: Boolean
     ): Dependency = {
-      if (_dependencies.exists(d => d.path == path && d.isLibrary == isLibrary))
+      if (_dependencies.exists(d => d.path == path))
         throw new IRException(s"Dependency '$path' already exists")
 
-      val newDep = new Dependency(this, path, isLibrary)
+      val newDep = new Dependency(this, path)
       _dependencies += newDep
       newDep
     }
@@ -741,10 +741,10 @@ object IR {
     }
   }
 
+  // PyTEAL: Removed isLibrary boolean check
   class Dependency(
       program: Program,
       val path: String,
-      val isLibrary: Boolean
   ) {
     private val _methods = mutable.ListBuffer[DependencyMethod]()
     private val _structs = mutable.ListBuffer[DependencyStruct]()

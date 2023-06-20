@@ -62,12 +62,14 @@ object IRTransformer {
         with StructItem
     class StructValue(val field: IR.StructField) extends StructItem
 
-    def defineDependency(declaration: ResolvedUseDeclaration): Unit = {
-      if (declaration.isLibrary && !ir.dependencies.exists(
+    // TODO: declaration.isLibrary && 
+    def defineDependency(declaration: ResolvedImportDeclaration): Unit = {
+      if (!ir.dependencies.exists(
             _.path == declaration.name)) {
-        val dep = ir.addDependency(declaration.name, declaration.isLibrary)
+        val dep = ir.addDependency(declaration.name)
         declaration.dependency match {
-          case None => throw new TransformerException("Unresolved dependency")
+          // Remove thrown error!
+          case None => ()
           case Some(libraryDef) => {
             DependencyTransformer.transform(ir, dep, libraryDef)
           }

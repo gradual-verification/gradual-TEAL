@@ -24,7 +24,7 @@ object CheckRuntime {
   }
 
   def addToIR(program: IR.Program): CheckRuntime = {
-    val dependency = program.addDependency(name, isLibrary = true)
+    val dependency = program.addDependency(name)
     DependencyTransformer.transform(program, dependency, header)
     new CheckRuntime(program)
   }
