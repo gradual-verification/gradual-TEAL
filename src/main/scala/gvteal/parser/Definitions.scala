@@ -10,7 +10,7 @@ trait Definitions extends Statements with Types {
       useDeclaration.map(Seq(_)) |
       predicateAnnotation |
       // PyTEAL extension
-      // functionDefinition.map(Seq(_)) |
+      functionDefinition.map(Seq(_)) |
       simpleImportDeclaration.map(Seq(_)) |
       compoundImportDeclaration.map(Seq(_))
     )
@@ -88,7 +88,7 @@ trait Definitions extends Statements with Types {
 
   /* ============ PyTEAL Extension ============ */
 
-  // [cuts](https://com-lihaoyi.github.io/fastparse/#Cuts)
+  // Library imports [cuts](https://com-lihaoyi.github.io/fastparse/#Cuts)
   def simpleImportDeclaration[_: P]: P[SimpleImportDeclaration] = 
     P((pos ~~ kw("import") ~~ " " ~/ libraryPath.rep(0, ",")))
     .map({
@@ -98,7 +98,7 @@ trait Definitions extends Statements with Types {
         SourceSpan(start, p.mkString(",").asInstanceOf[StringExpression].span.end))
     })
   def compoundImportDeclaration[_: P]: P[CompoundImportDeclaration] =
-    P((pos ~~ kw("from") ~~ " " ~~ libraryPath.rep(0, ",") ~~ " " ~~ "import" ~~ " " ~~ libraryPath.rep(0, ",")))
+    P((pos ~~ kw("from") ~~ " " ~~ libraryPath.rep(0, ",") ~~ " " ~~ kw("import") ~~ " " ~~ libraryPath.rep(0, ",")))
     .map({
       case(start, p, f) => CompoundImportDeclaration(
         p.mkString(",").asInstanceOf[StringExpression], 
@@ -123,17 +123,15 @@ trait Definitions extends Statements with Types {
     P(stringExpression).map(PyLocalPath(_))
 
   // Function signatures
-  // def functionDefinition[_: P]: P[FunctionDefinition]
-  //   P(
-  //     "def" ~ identifier ~ "(" ~ functionParameter.rep(0, ",") ~ ")" ~ annotations ~ 
-  //     (P(";").map(_ => None) | pyBlockStatement.map(Some(_))) ~~ pos
-  //   ).map({
-  //     case (id, args, annot, body, end) =>
-  //       FunctionDefinition(id, args.toList, body, annot, SourceSpan(id.span.start, id.span.end))
-  //   })
+  def functionDefinition[_: P]: P[FunctionDefinition] =
+    P(span(kw("def") ~ identifier ~ "(" ~ functionParameter.rep(0, ",") ~ "):" ~ annotations ~ pyBlockStatement(Some(_))) ~~ pos)
+    .map({
+      case (id, args, annot, body, end) => 
+        FunctionDefinition(id, args.toList, body, annot, SourceSpan(id.span.start, end))
+    })
   
-  // def functionParameter[_: P]: P[FunctionDefinition] = 
-  //   P(identifier).map({
-  //     case(id) => FunctionDefinition(id, SourceSpan(id.span.start, id.span.end))
-  //   })
+  def functionParameter[_: P]: P[FunctionDefinition] = 
+    P(identifier).map({
+      case(id) => FunctionDefinition(id, SourceSpan(id.span.start, id.span.end))
+    })
 }

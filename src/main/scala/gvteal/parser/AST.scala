@@ -185,7 +185,6 @@ case class PyBlockStatement(
 
 // Definitions
 sealed trait Definition extends Node
-case class FunctionMemberDefinition(id: Identifier, span: SourceSpan) extends Node
 case class MemberDefinition(id: Identifier, valueType: Type, span: SourceSpan) extends Node
 case class TypeDefinition(id: Identifier, value: Type, span: SourceSpan) extends Definition
 case class StructDefinition(id: Identifier, fields: Option[List[MemberDefinition]], span: SourceSpan) extends Definition
@@ -259,6 +258,17 @@ object AssignOperator extends Enumeration {
 }
 
 /* ============ PyTEAL Extension ============ */
+case class FunctionMemberDefinition(id: Identifier, span: SourceSpan) extends Node
+case class FunctionDefinition(
+  id: Identifier,
+  // returnType: Type, (Type inference in typed AST)
+  arguments: List[FunctionMemberDefinition],
+  body: Option[BlockStatement],
+  specifications: List[Specification],
+  span: SourceSpan
+) extends Definition
+
+
 // TODO (cleanup): Make this nicer, combine both simpleImport and compoundImport into one with Option[]; current problem is matching `Any`
 case class SimpleImportDeclaration(
   path: StringExpression, 
@@ -269,17 +279,6 @@ case class CompoundImportDeclaration(
   functions: StringExpression,
   span: SourceSpan
 ) extends Definition
-
-
-case class FunctionDefinition(
-  id: Identifier,
-  // returnType: Type, (Type inference in typed AST)
-  arguments: List[FunctionMemberDefinition],
-  body: Option[BlockStatement],
-  specifications: List[Specification],
-  span: SourceSpan
-) extends Definition
-
 
 // pyTEAL N-Ary Ops
 object PyNaryOperator extends Enumeration {
