@@ -11,7 +11,8 @@ trait Definitions extends Statements with Types {
       predicateAnnotation |
       // PyTEAL extension
       // functionDefinition.map(Seq(_)) |
-      importDeclaration.map(Seq(_))
+      simpleImportDeclaration.map(Seq(_)) |
+      compoundImportDeclaration.map(Seq(_))
     )
 
   def structDefinition[_: P]: P[StructDefinition] =
@@ -87,12 +88,22 @@ trait Definitions extends Statements with Types {
 
   /* ============ PyTEAL Extension ============ */
 
-  // TODO: Implement `for * import *` [cuts](https://com-lihaoyi.github.io/fastparse/#Cuts)
-  def importDeclaration[_: P]: P[ImportDeclaration] = 
-    P((pos ~~ kw("import") ~~ " " ~/ importPath))
-      // (pos ~~ kw("from") ~~ " " ~~ importPath ~~ " " ~~ "import" ~~ " " ~~ importPath))
+  // [cuts](https://com-lihaoyi.github.io/fastparse/#Cuts)
+  def simpleImportDeclaration[_: P]: P[SimpleImportDeclaration] = 
+    P((pos ~~ kw("import") ~~ " " ~/ libraryPath.rep(0, ",")))
     .map({
-      case(start, p) => ImportDeclaration(p.path, p.isInstanceOf[PyLibraryPath], SourceSpan(start, p.path.span.end))
+      // TODO (cleanup): This can probably be made nicer with an `p as mkString` variable carried
+      case(start, p) => SimpleImportDeclaration(
+        p.mkString(",").asInstanceOf[StringExpression], 
+        SourceSpan(start, p.mkString(",").asInstanceOf[StringExpression].span.end))
+    })
+  def compoundImportDeclaration[_: P]: P[CompoundImportDeclaration] =
+    P((pos ~~ kw("from") ~~ " " ~~ libraryPath.rep(0, ",") ~~ " " ~~ "import" ~~ " " ~~ libraryPath.rep(0, ",")))
+    .map({
+      case(start, p, f) => CompoundImportDeclaration(
+        p.mkString(",").asInstanceOf[StringExpression], 
+        f.mkString(",").asInstanceOf[StringExpression],
+        SourceSpan(start, f.mkString(",").asInstanceOf[StringExpression].span.end))
     })
 
   sealed trait ImportPath {
@@ -101,10 +112,7 @@ trait Definitions extends Statements with Types {
   case class PyLibraryPath(path: StringExpression) extends ImportPath
   case class PyLocalPath(path: StringExpression) extends ImportPath
 
-  // TODO: Implement `for * import *`
-  // def importPath[_: P]: P[ImportPath] =
-  //   P(importLibraryPath.rep(0, ",") | importLocalPath.rep(0, ","))
-  def importPath[_: P]: P[ImportPath] =
+  def libraryPath[_: P]: P[ImportPath] =
     P(importLibraryPath | importLocalPath)
 
   def importLibraryPath[_: P]: P[PyLibraryPath] = 

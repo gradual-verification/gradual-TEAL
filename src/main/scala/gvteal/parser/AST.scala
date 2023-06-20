@@ -205,9 +205,75 @@ case class MethodDefinition(
   specifications: List[Specification],
   span: SourceSpan
 ) extends Definition
+
+object BinaryOperator extends Enumeration {
+  type BinaryOperator = Value
+  
+  val LogicalOr = Value("||")
+  val LogicalAnd = Value("&&")
+  val BitwiseOr = Value("|")
+  val BitwiseXor = Value("^")
+  val BitwiseAnd = Value("&")
+  val Equal = Value("==")
+  val NotEqual = Value("!=")
+  val Less = Value("<")
+  val LessEqual = Value("<=")
+  val GreaterEqual = Value(">=")
+  val Greater = Value(">")
+  val ShiftLeft = Value("<<")
+  val ShiftRight = Value(">>")
+  val Add = Value("+")
+  val Subtract = Value("-")
+  val Multiply = Value("*")
+  val Divide = Value("/")
+  val Modulus = Value("%")
+}
+
+object UnaryOperator extends Enumeration {
+  type UnaryOperator = Value
+  val Not = Value("!")
+  val BitwiseNot = Value("~")
+  val Negate = Value("-")
+  val Deref = Value("*")
+}
+
+sealed trait IncrementOperator
+object IncrementOperator {
+  case object Increment extends IncrementOperator
+  case object Decrement extends IncrementOperator
+}
+
+object AssignOperator extends Enumeration {
+  type AssignOperator = Value
+  val Assign = Value("=")
+  val Add = Value("+=")
+  val Subtract = Value("-=")
+  val Multiply = Value("*=")
+  val Divide = Value("/=")
+  val Modulus = Value("%=")
+  val ShiftLeft = Value("<<=")
+  val ShiftRight = Value(">>=")
+  val BitwiseAnd = Value("&=")
+  val BitwiseOr = Value("|=")
+  val BitwiseXor = Value("^=")
+}
+
+/* ============ PyTEAL Extension ============ */
+// TODO (cleanup): Make this nicer, combine both simpleImport and compoundImport into one with Option[]; current problem is matching `Any`
+case class SimpleImportDeclaration(
+  path: StringExpression, 
+  span: SourceSpan,
+  ) extends Definition
+case class CompoundImportDeclaration(
+  path: StringExpression,
+  functions: StringExpression,
+  span: SourceSpan
+) extends Definition
+
+
 case class FunctionDefinition(
   id: Identifier,
-  // returnType: Type, (Type infernece in typed AST)
+  // returnType: Type, (Type inference in typed AST)
   arguments: List[FunctionMemberDefinition],
   body: Option[BlockStatement],
   specifications: List[Specification],
@@ -264,29 +330,6 @@ object PyBinaryOperator extends Enumeration {
   val PyExtractUnit64 = Value("ExtractUnit64")
 }
 
-object BinaryOperator extends Enumeration {
-  type BinaryOperator = Value
-  
-  val LogicalOr = Value("||")
-  val LogicalAnd = Value("&&")
-  val BitwiseOr = Value("|")
-  val BitwiseXor = Value("^")
-  val BitwiseAnd = Value("&")
-  val Equal = Value("==")
-  val NotEqual = Value("!=")
-  val Less = Value("<")
-  val LessEqual = Value("<=")
-  val GreaterEqual = Value(">=")
-  val Greater = Value(">")
-  val ShiftLeft = Value("<<")
-  val ShiftRight = Value(">>")
-  val Add = Value("+")
-  val Subtract = Value("-")
-  val Multiply = Value("*")
-  val Divide = Value("/")
-  val Modulus = Value("%")
-}
-
 // pyTEAL Unary Ops
 object PyUnaryOperator extends Enumeration {
   type PyUnaryOperator = Value
@@ -306,37 +349,4 @@ object PyUnaryOperator extends Enumeration {
   val BytesZero = Value("BytesZero")
   val Log = Value("Log")
   //TODO: sha512_256, Sha3_256
-
 }
-
-object UnaryOperator extends Enumeration {
-  type UnaryOperator = Value
-  val Not = Value("!")
-  val BitwiseNot = Value("~")
-  val Negate = Value("-")
-  val Deref = Value("*")
-}
-
-sealed trait IncrementOperator
-object IncrementOperator {
-  case object Increment extends IncrementOperator
-  case object Decrement extends IncrementOperator
-}
-
-object AssignOperator extends Enumeration {
-  type AssignOperator = Value
-  val Assign = Value("=")
-  val Add = Value("+=")
-  val Subtract = Value("-=")
-  val Multiply = Value("*=")
-  val Divide = Value("/=")
-  val Modulus = Value("%=")
-  val ShiftLeft = Value("<<=")
-  val ShiftRight = Value(">>=")
-  val BitwiseAnd = Value("&=")
-  val BitwiseOr = Value("|=")
-  val BitwiseXor = Value("^=")
-}
-
-/* ============ PyTEAL Extension ============ */
-case class ImportDeclaration(path: StringExpression, isLibrary: Boolean, span: SourceSpan) extends Definition
