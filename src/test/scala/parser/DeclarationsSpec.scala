@@ -96,18 +96,16 @@ class DeclarationsSpec extends AnyFunSuite {
     assert(stmt3.isInstanceOf[ExpressionStatement])
   }
 
+  // PyTEAL: Remove isLibrary check
   test("use library declaration") {
-    val Success(Seq(use: UseDeclaration), _) = Parser.parseDef("#use <mylib>")
+    val Success(Seq(use: SimpleImportDeclaration), _) = Parser.parseDef("#import <mylib>")
     assert(use.path.raw == "<mylib>")
-    assert(use.path == "mylib")
-    assert(use.isLibrary)
-  }
+    assert(use.path == "mylib")  }
 
   test("use path declaration") {
-    val Success(Seq(use: UseDeclaration), _) = Parser.parseDef("#use \"test.c0\"")
+    val Success(Seq(use: SimpleImportDeclaration), _) = Parser.parseDef("#use \"test.c0\"")
     assert(use.path.raw == "\"test.c0\"")
     assert(use.path == "test.c0")
-    assert(!use.isLibrary)
   }
 
   test("predicate definition") {

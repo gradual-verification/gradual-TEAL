@@ -271,7 +271,7 @@ case class FunctionDefinition(
 
 // TODO (cleanup): Make this nicer, combine both simpleImport and compoundImport into one with Option[]; current problem is matching `Any`
 case class SimpleImportDeclaration(
-  path: StringExpression, 
+  path: StringExpression,
   span: SourceSpan,
   ) extends Definition
 case class CompoundImportDeclaration(

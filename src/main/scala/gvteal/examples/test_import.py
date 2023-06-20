@@ -1,4 +1,6 @@
-# from pyteal import compileTeal, Mode 
-from pyteal import *
-from vote import approval_program, clear_state_program
-import base64
+import "base64"
+
+int main()
+{
+  return 0;
+}

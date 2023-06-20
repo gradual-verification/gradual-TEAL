@@ -19,7 +19,8 @@ case class ResolvedProgram(
     predicateDefinitions: List[ResolvedPredicateDefinition],
     structDefinitions: List[ResolvedStructDefinition],
     types: List[ResolvedTypeDef],
-    dependencies: List[ResolvedUseDeclaration]
+    // dependencies: List[ResolvedUseDeclaration],
+    dependencies: List[ResolvedImportDeclaration]
 )
 
 case class Scope(
@@ -1031,24 +1032,27 @@ object Resolver {
     val predicateDefinitions = ListBuffer[ResolvedPredicateDefinition]()
     val structDefinitions = ListBuffer[ResolvedStructDefinition]()
     val types = ListBuffer[ResolvedTypeDef]()
-    val dependencies = ListBuffer[ResolvedUseDeclaration]()
+    // val dependencies = ListBuffer[ResolvedUseDeclaration]()
+    val dependencies = ListBuffer[ResolvedImportDeclaration]()
     var scope = initialScope
 
     for (definition <- program) {
       definition match {
-        case u: UseDeclaration => {
+        case u: SimpleImportDeclaration => {
           val library =
-            if (u.isLibrary) Some(u.path.value)
+            // PyTEAL: hardcoded to true isLib check
+            if (true) Some(u.path.value)
             else {
               scope.errors.error(u, "Local imports are not implemented")
               None
             }
 
           val path = library.flatMap(lib => {
-            resolveLibraryPath(lib, librarySearchPaths).orElse({
-              scope.errors.error(u, s"Unable to find library ${u.path.raw}")
-              None
-            })
+            resolveLibraryPath(lib, librarySearchPaths)
+            // .orElse({
+              // scope.errors.error(u, s"Unable to find library ${u.path.raw}")
+              // None
+            // })
           })
 
           val resolved = path.flatMap(path =>
@@ -1080,9 +1084,8 @@ object Resolver {
               })
           })
 
-          dependencies += ResolvedUseDeclaration(u,
+          dependencies += ResolvedImportDeclaration(u,
                                                  u.path.value,
-                                                 u.isLibrary,
                                                  path,
                                                  resolved)
         }
