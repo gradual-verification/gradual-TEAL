@@ -116,10 +116,19 @@ trait Definitions extends Statements with Types {
   def libraryPath[_: P]: P[ImportPath] =
     P(importLibraryPath | importLocalPath)
 
-  def importLibraryPath[_: P]: P[PyLibraryPath] = 
-    P(span(library.!)).map({
-      case (raw, span) => PyLibraryPath(StringExpression(raw, raw.substring(1, raw.length - 1), span))
-    })
+  // def importLibraryPath[_: P]: P[PyLibraryPath] = 
+  //   P(span(library.!)).map({
+  //     case (raw, span) => PyLibraryPath(StringExpression(raw, raw.substring(1, raw.length - 1), span))
+  //   })
+  def importLibraryPath[_: P]: P[PyLibraryPath] =
+    P(library.!).map { raw =>
+      val sourceSpan = SourceSpan(SourcePosition(1, 0, 0), SourcePosition(1, raw.length, raw.length))
+
+      println(s"Raw: $raw")
+      val result = PyLibraryPath(StringExpression(raw, raw, sourceSpan))
+      println(s"Result: $result")
+      result
+    }
   def importLocalPath[_: P]: P[PyLocalPath] = 
     P(stringExpression).map(PyLocalPath(_))
 
