@@ -24,8 +24,11 @@ object CheckRuntime {
   }
 
   def addToIR(program: IR.Program): CheckRuntime = {
-    val dependency = program.addDependency(name)
-    DependencyTransformer.transform(program, dependency, header)
+    // TODO: What should be the second parameter for functions in compound?
+    val simpleDependency = program.addSimpleDependency(name, "")
+    val compoundDependency = program.addCompoundDependency(name, "")
+    DependencyTransformer.transform(program, simpleDependency, header)
+    DependencyTransformer.transform(program, compoundDependency, header)
     new CheckRuntime(program)
   }
 

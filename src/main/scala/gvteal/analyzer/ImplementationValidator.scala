@@ -9,7 +9,8 @@ object ImplementationValidator {
 
   def validate(program: ResolvedProgram, errors: ErrorSink): Unit = {
     val definedMethods = program.methodDefinitions.toSeq.map(_.name).toSet
-    val libraryMethods = collectLibraryMethods(program.dependencies, errors)
+    val librarySimpleMethods = collectLibrarySimpleMethods(program.simpleDependencies, errors)
+    val libraryCompoundMethods = collectLibraryCompoundMethods(program.compoundDependencies, errors)
     val definedPredicates = program.predicateDefinitions.toSeq.map(_.name).toSet
     // TODO: Validate PyTEAL file for import always including pyteal
     if (!definedMethods.contains("main")) {
@@ -21,7 +22,7 @@ object ImplementationValidator {
         expr,
         _ match {
           case invoke: ResolvedInvoke => invoke.method.foreach { m =>
-            if (!libraryMethods.contains(m.name) && !definedMethods.contains(m.name))
+            if (!librarySimpleMethods.contains(m.name) && !libraryCompoundMethods.contains(m.name) && !definedMethods.contains(m.name))
               errors.error(invoke, s"'${invoke.methodName}' is never implemented")
           }
 
@@ -71,8 +72,8 @@ object ImplementationValidator {
   }
 
   @tailrec
-  def collectLibraryMethods(
-      uses: List[ResolvedImportDeclaration],
+  def collectLibrarySimpleMethods(
+      uses: List[ResolvedImportSimpleDeclaration],
       errors: ErrorSink,
       methods: Set[String] = Set(),
       visitedLibraries: Set[String] = Set()
@@ -92,13 +93,46 @@ object ImplementationValidator {
           program.predicateDeclarations.foreach(defn =>
             errors.error(defn, "Imported predicates are not implemented"))
 
-          collectLibraryMethods(
-            program.dependencies ::: rest,
+          collectLibrarySimpleMethods(
+            program.simpleDependencies ::: rest,
             errors,
             methods ++ program.methodDeclarations.map(_.name),
             visitedLibraries + use.name
           )
-        case _ => collectLibraryMethods(rest, errors, methods, visitedLibraries)
+        case _ => collectLibrarySimpleMethods(rest, errors, methods, visitedLibraries)
+      }
+    }
+  }
+
+  @tailrec
+  def collectLibraryCompoundMethods(
+      uses: List[ResolvedImportCompoundDeclaration],
+      errors: ErrorSink,
+      methods: Set[String] = Set(),
+      visitedLibraries: Set[String] = Set()
+  ): Set[String] = {
+    uses match {
+      case Nil => methods
+      case use :: rest => use.dependency match {
+        case Some(program) if !visitedLibraries.contains(use.name) =>
+          program.methodDefinitions.foreach(defn =>
+            errors.error(defn, "Imported libraries may not contain method implementations"))
+          program.predicateDefinitions.foreach(defn =>
+            errors.error(defn, "Imported libraries may not contain predicate implementations"))
+          program.structDefinitions.foreach(defn =>
+            errors.error(defn, "Imported libraries may not contain struct definitions"))
+
+          // TODO: Allow abstract predicates to be imported?
+          program.predicateDeclarations.foreach(defn =>
+            errors.error(defn, "Imported predicates are not implemented"))
+
+          collectLibraryCompoundMethods(
+            program.compoundDependencies ::: rest,
+            errors,
+            methods ++ program.methodDeclarations.map(_.name),
+            visitedLibraries + use.name
+          )
+        case _ => collectLibraryCompoundMethods(rest, errors, methods, visitedLibraries)
       }
     }
   }
