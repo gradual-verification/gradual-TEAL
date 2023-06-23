@@ -96,18 +96,17 @@ class DeclarationsSpec extends AnyFunSuite {
     assert(stmt3.isInstanceOf[ExpressionStatement])
   }
 
-  test("use library declaration") {
-    val Success(Seq(use: UseDeclaration), _) = Parser.parseDef("#use <mylib>")
-    assert(use.path.raw == "<mylib>")
-    assert(use.path == "mylib")
-    assert(use.isLibrary)
-  }
+  // PyTEAL: Remove isLibrary check
+  test("import library declaration") {
+    val Success(Seq(use: SimpleImportDeclaration), _) = Parser.parseDef("#import mylib")
+    assert(use.path.raw == "mylib")
+    assert(use.path == "mylib")  }
 
+  // TODO: PyTEAL test "from ... import...; from ... import *"
   test("use path declaration") {
-    val Success(Seq(use: UseDeclaration), _) = Parser.parseDef("#use \"test.c0\"")
+    val Success(Seq(use: SimpleImportDeclaration), _) = Parser.parseDef("#use \"test.c0\"")
     assert(use.path.raw == "\"test.c0\"")
     assert(use.path == "test.c0")
-    assert(!use.isLibrary)
   }
 
   test("predicate definition") {
@@ -133,7 +132,7 @@ class DeclarationsSpec extends AnyFunSuite {
   }
 
   test("empty annotation") {
-    assert(Parser.parseDef("//@ ").get.value.isEmpty)
-    assert(Parser.parseDef("/*@  @*/").get.value.isEmpty)
+    assert(Parser.parseDef("#@ ").get.value.isEmpty)
+    assert(Parser.parseDef("\"\"\"@  @\"\"\"").get.value.isEmpty)
   }
 }

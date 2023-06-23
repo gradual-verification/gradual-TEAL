@@ -15,8 +15,10 @@ object IRTransformer {
     val ir = new IR.Program()
 
     def transform(): IR.Program = {
-      for (dep <- program.dependencies)
-        defineDependency(dep)
+      for (dep <- program.simpleDependencies)
+        defineSimpleDependency(dep)
+      for (dep <- program.compoundDependencies)
+        defineCompoundDependency(dep)
       for (struct <- program.structDefinitions)
         implementStruct(struct)
 
@@ -62,12 +64,28 @@ object IRTransformer {
         with StructItem
     class StructValue(val field: IR.StructField) extends StructItem
 
-    def defineDependency(declaration: ResolvedUseDeclaration): Unit = {
-      if (declaration.isLibrary && !ir.dependencies.exists(
+    // TODO: declaration.isLibrary && 
+    def defineSimpleDependency(declaration: ResolvedImportSimpleDeclaration): Unit = {
+      if (!ir.dependencies.exists(
             _.path == declaration.name)) {
-        val dep = ir.addDependency(declaration.name, declaration.isLibrary)
+        val dep = ir.addSimpleDependency(declaration.name, "")
         declaration.dependency match {
-          case None => throw new TransformerException("Unresolved dependency")
+          // Remove thrown error!
+          case None => ()
+          case Some(libraryDef) => {
+            DependencyTransformer.transform(ir, dep, libraryDef)
+          }
+        }
+      }
+    }
+
+    def defineCompoundDependency(declaration: ResolvedImportCompoundDeclaration): Unit = {
+      if (!ir.dependencies.exists(
+            _.path == declaration.name)) {
+        val dep = ir.addCompoundDependency(declaration.name, declaration.functions)
+        declaration.dependency match {
+          // Remove thrown error!
+          case None => ()
           case Some(libraryDef) => {
             DependencyTransformer.transform(ir, dep, libraryDef)
           }

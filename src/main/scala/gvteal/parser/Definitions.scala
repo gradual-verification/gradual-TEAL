@@ -7,10 +7,11 @@ trait Definitions extends Statements with Types {
       structDefinition.map(Seq(_)) |
       typeDefinition.map(Seq(_)) |
       methodDefinition.map(Seq(_)) |
-      functionDefinition.map(Seq(_)) | 
-      useDeclaration.map(Seq(_)) |
-      importDeclaration.map(Seq(_)) |
-      predicateAnnotation
+      predicateAnnotation |
+      // PyTEAL extension
+      // functionDefinition.map(Seq(_)) |
+      simpleImportDeclaration.map(Seq(_)) |
+      compoundImportDeclaration.map(Seq(_))
     )
 
   def structDefinition[_: P]: P[StructDefinition] =
@@ -29,23 +30,6 @@ trait Definitions extends Statements with Types {
       case ((defType, id), span) => TypeDefinition(id, defType, span)
     })
 
-  // PyTEAL function definitions
-  // TODO: Fix PyBlockStatement in Statements.scala
-  def functionDefinition[_: P]: P[FunctionDefinition] = 
-    P(
-      "def" ~ identifier ~ "(" ~ functionParameter.rep(0, ",") ~ ")" ~
-      annotations ~
-      (P(";").map(_ => None) | blockStatement.map(Some(_))) ~~
-      pos
-    ).map({
-      case (id, args, annot, body, end) =>
-        FunctionDefinition(id, args.toList, body, annot, SourceSpan(id.span.start, end))
-    })
-  def functionParameter[_: P]: P[FncMemberDefinition] = 
-    P(identifier).map({
-      case(id) => FncMemberDefinition(id, SourceSpan(id.span.start, id.span.end))
-    })
-
   def methodDefinition[_: P]: P[MethodDefinition] =
     P(
       typeReference ~ identifier ~ "(" ~ methodParameter.rep(0, ",") ~ ")" ~
@@ -61,73 +45,13 @@ trait Definitions extends Statements with Types {
     P(typeReference ~ identifier).map({
       case (paramType, id) => MemberDefinition(id, paramType, SourceSpan(paramType.span.start, id.span.end))
     })
-  
-  // PyTEAL imports for the head of a file
-  // TODO: Python imports aren't as simple as `use`, instead make use of `from ... import`; 
-  // we need to define both an `importPath` and an `importFnc` 
-  // def importDeclaration[_: P]: P[ImportDeclaration] =
-  //   P("from" ~ " " importPath ~ " " ~ "import" ~ " " ~ importFnc | ("import" ~/ importPath))
-  //     .map({
-  //       case(start, p) => ImportDeclaration(p.path, p.isInstanceOf[LibraryPath], SourceSpan(start, p.path.span.end))
-  //   }) 
-  
-  // sealed trait ImportPath {
-  //   val path: StringExpression
-  // }
-
-  // sealed trait ImportFnc {
-  //   val fnc: StringExpression
-  // }
-
-  // def importPath[_: P]: P[ImportPath] = 
-  //   P(useLibraryPath | useLocalPath)
-  
-  // def importFnc[_: P]: P[ImportFnc] = 
-  //   P(importLibraryFnc)
-  
-  // case class LibraryFnc(function: StringExpression) extends ImportPath
-
-  // TODO: Figure out what a `libraryfunction` looks like
-  // def importLibraryFnc[_: P]: P[LibraryFnc] = 
-  //   P(span(library.!)).map({
-  //     case (raw, span) => LibraryFnc(StringExpression(raw, raw.substring(1, raw.length() - 1), span))
-  //   })
-
-  def importDeclaration[_: P]: P[Definition] =
-    P(importSimple | importFrom)
-  
-  def importSimple[_: P]: P[ImportSimple] = P(pos ~~ kw("import") ~/ importPath)
-    .map({
-      case(start, p) => ImportSimple(p, SourceSpan(start, p.span.end))
-  })
-  
-  def importPath[_: P]: P[StringExpression] = 
-    P(identifier.rep(1, sep=".")).map({ identifiers =>
-      val raw = identifiers.map(_.name).mkString(".")
-      val start = identifiers.head.span.start
-      val end = identifiers.last.span.end
-      StringExpression(raw, raw, SourceSpan(start, end))
-    })
-
-  def importFrom[_: P]: P[Definition] =
-    P((Index ~~ kw("from") ~/ identifier ~ kw("import") ~/ ("*".!.map(_ => Right(Nil)) | identifier.rep(sep = ",").map(Left(_))) ~~ Index).map {
-      // from vote import approval_program, clear_state_program
-      case (start, name, Left(functions), end) => ImportFrom(StringExpression(name.name, name.name, name.span), functions.map(f => f.name).toList, SourceSpan(name.span.start, name.span.end))
-      // from pyteal import *
-      case (start, name, Right(_), end) => ImportFromAll(StringExpression(name.name, name.name, name.span), SourceSpan(name.span.start, name.span.end))
-    })
-
-  def useDeclaration[_: P]: P[UseDeclaration] = P(pos ~~ kw("#use") ~/ usePath)
-    .map({
-      case(start, p) => UseDeclaration(p.path, p.isInstanceOf[LibraryPath], SourceSpan(start, p.path.span.end))
-    })
 
   sealed trait UsePath {
     val path: StringExpression
   }
   case class LibraryPath(path: StringExpression) extends UsePath
   case class LocalPath(path: StringExpression) extends UsePath
-  def usePath[_: P]: P[UsePath] = 
+  def usePath[_: P]: P[UsePath] =
     P(useLibraryPath | useLocalPath)
   def useLibraryPath[_: P]: P[LibraryPath] =
     P(span(library.!)).map({
@@ -155,4 +79,59 @@ trait Definitions extends Statements with Types {
 
   def predicateBody[_: P]: P[Option[Expression]] =
     P("=" ~/ expression ~/ ";").map(Some(_))
+
+  /* ============ PyTEAL Extension ============ */
+
+  // Library imports [cuts](https://com-lihaoyi.github.io/fastparse/#Cuts)
+  def simpleImportDeclaration[_: P]: P[SimpleImportDeclaration] = 
+    P((pos ~~ kw("import") ~~ " " ~/ libraryPath))
+    .map({
+      // TODO (cleanup): This can probably be made nicer with an `p as mkString` variable carried
+      case(start, p) => SimpleImportDeclaration(
+        p.path, SourceSpan(start, p.path.span.end))
+    })
+
+  def compoundImportDeclaration[_: P]: P[CompoundImportDeclaration] =
+    P((pos ~~ kw("from") ~~ " " ~~ libraryPath.rep(sep = ",") ~~ " " ~~ kw("import") ~~ " " ~~ libraryPath.rep(sep = ",")))
+    .map({
+      case(start, p, f) => 
+        val pString = p.map(_.path.value).mkString(",")
+        val fString = f.map(_.path.value).mkString(",") 
+        val pSpan = if (p.nonEmpty) Some(SourceSpan(p.head.path.span.start, p.last.path.span.end)) else None
+        val fSpan = if (f.nonEmpty) Some(SourceSpan(f.head.path.span.start, f.last.path.span.end)) else None
+        CompoundImportDeclaration(
+          pSpan.map(span => StringExpression(pString, pString, span)).getOrElse(StringExpression(pString, pString, SourceSpan(start, start))),
+          fSpan.map(span => StringExpression(fString, fString, span)).getOrElse(StringExpression(fString, fString, SourceSpan(start, start))),
+          SourceSpan(start, fSpan.get.end)
+        )
+    })
+
+  sealed trait ImportPath {
+    val path: StringExpression
+  }
+  case class PyLibraryPath(path: StringExpression) extends ImportPath
+  case class PyLocalPath(path: StringExpression) extends ImportPath
+
+  def libraryPath[_: P]: P[ImportPath] =
+    P(importLibraryPath | importLocalPath)
+
+  def importLibraryPath[_: P]: P[PyLibraryPath] = 
+    P(span(library.!)).map({
+      case (raw, span) => PyLibraryPath(StringExpression(raw, raw, span))
+    })
+  def importLocalPath[_: P]: P[PyLocalPath] = 
+    P(stringExpression).map(PyLocalPath(_))
+
+  // Function signatures
+  // def functionDefinition[_: P]: P[FunctionDefinition] =
+  //   P(span(kw("def") ~ identifier ~ "(" ~ functionParameter.rep(0, ",") ~ "):" ~ annotations ~ pyBlockStatement(Some(_))) ~~ pos)
+  //   .map({
+  //     case (id, args, annot, body, end) => 
+  //       FunctionDefinition(id, args.toList, body, annot, SourceSpan(id.span.start, end))
+  //   })
+  
+  // def functionParameter[_: P]: P[FunctionDefinition] = 
+  //   P(identifier).map({
+  //     case(id) => FunctionDefinition(id, SourceSpan(id.span.start, id.span.end))
+  //   })
 }

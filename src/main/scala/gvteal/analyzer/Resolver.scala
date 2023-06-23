@@ -19,7 +19,8 @@ case class ResolvedProgram(
     predicateDefinitions: List[ResolvedPredicateDefinition],
     structDefinitions: List[ResolvedStructDefinition],
     types: List[ResolvedTypeDef],
-    dependencies: List[ResolvedUseDeclaration]
+    simpleDependencies: List[ResolvedImportSimpleDeclaration],
+    compoundDependencies: List[ResolvedImportCompoundDeclaration]
 )
 
 case class Scope(
@@ -1031,24 +1032,28 @@ object Resolver {
     val predicateDefinitions = ListBuffer[ResolvedPredicateDefinition]()
     val structDefinitions = ListBuffer[ResolvedStructDefinition]()
     val types = ListBuffer[ResolvedTypeDef]()
-    val dependencies = ListBuffer[ResolvedUseDeclaration]()
+    // val dependencies = ListBuffer[ResolvedUseDeclaration]()
+    val simpleDependencies = ListBuffer[ResolvedImportSimpleDeclaration]()
+    val compoundDependencies = ListBuffer[ResolvedImportCompoundDeclaration]()
     var scope = initialScope
 
     for (definition <- program) {
       definition match {
-        case u: UseDeclaration => {
+        case u: SimpleImportDeclaration => {
           val library =
-            if (u.isLibrary) Some(u.path.value)
+            // PyTEAL: hardcoded to true isLib check
+            if (true) Some(u.path.value)
             else {
               scope.errors.error(u, "Local imports are not implemented")
               None
             }
 
           val path = library.flatMap(lib => {
-            resolveLibraryPath(lib, librarySearchPaths).orElse({
-              scope.errors.error(u, s"Unable to find library ${u.path.raw}")
-              None
-            })
+            resolveLibraryPath(lib, librarySearchPaths)
+            // .orElse({
+              // scope.errors.error(u, s"Unable to find library ${u.path.raw}")
+              // None
+            // })
           })
 
           val resolved = path.flatMap(path =>
@@ -1080,11 +1085,59 @@ object Resolver {
               })
           })
 
-          dependencies += ResolvedUseDeclaration(u,
-                                                 u.path.value,
-                                                 u.isLibrary,
-                                                 path,
-                                                 resolved)
+          simpleDependencies += ResolvedImportSimpleDeclaration(
+                                u,
+                                u.path.value,
+                                path,
+                                resolved)
+        }
+
+        case c: CompoundImportDeclaration => {
+          val librariesP = Some(c.path.value)
+
+          val path = librariesP.flatMap(lib => {
+            resolveLibraryPath(lib.trim, librarySearchPaths)
+            // .orElse({
+              // scope.errors.error(c, s"Unable to find library ${lib.trim}")
+              // None
+            // })
+          })
+
+          val resolved = path.flatMap(path =>
+            scope.libraries.get(path).orElse {
+              val source =
+                try {
+                  Some(Files.readString(path))
+                } catch {
+                  case e: IOException =>
+                    scope.errors.error(c, s"Could not read file '$path'")
+                    None
+                }
+
+              val parsed = source.flatMap(source => {
+                Parser.parseProgram(source) match {
+                  case Success(value, _) => Some(value)
+                  case fail: Failure =>
+                    val error = fail.trace().longAggregateMsg
+                    scope.errors
+                      .error(c, s"Parsing error while parsing '$path':\n$error")
+                    None
+                }
+              })
+
+              parsed.map(parsed => {
+                val (s, p) = resolveProgram(parsed, librarySearchPaths, scope)
+                scope = s.declareLibrary(path, p)
+                p
+              })
+          })
+
+          compoundDependencies += ResolvedImportCompoundDeclaration(
+                                  c,
+                                  c.path.value,
+                                  c.functions.value,
+                                  path,
+                                  resolved)
         }
 
         case t: TypeDefinition => {
@@ -1147,7 +1200,8 @@ object Resolver {
        predicateDefinitions = predicateDefinitions.toList,
        structDefinitions = structDefinitions.toList,
        types = types.toList,
-       dependencies = dependencies.toList
+       simpleDependencies = simpleDependencies.toList,
+       compoundDependencies = compoundDependencies.toList
      ))
   }
 }

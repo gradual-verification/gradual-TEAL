@@ -45,6 +45,8 @@ trait Specifications extends Expressions {
     P(span(kw("unfold") ~/ identifier ~ "(" ~ expression.rep(sep=",") ~ ")" ~ ";"))
       .map { case ((ident, args), span) => UnfoldSpecification(ident, args.toList, span) }
   
+  /* ============ PyTEAL Extension ============ */
+
   def annotations[_: P]: P[List[Specification]] =
     P(annotation.rep).map(a => a.flatten.toList)
 

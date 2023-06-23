@@ -20,7 +20,7 @@ trait Lexer extends Whitespace {
 
   def character[_: P] = P("'" ~~/ charChar ~~ "'")
 
-  def library[_: P] = P("<" ~~/ libraryChar.repX ~~ ">")
+  def library[_: P] = P(libraryChar.repX)
 
   def stringChar[_: P] = P(normalChar | escape)
 
@@ -30,7 +30,7 @@ trait Lexer extends Whitespace {
     P(CharPred(c => c != '"' && c != '\\' && !c.isControl))
 
   def libraryChar[_: P] =
-    P(CharPred(c => c != '>' && !c.isControl))
+    P(CharPred(c => c != ' ' && !c.isControl))
   
   // <esc> ::= ::= \n | \t | \v | \b | \r | \f | \a | \\ | \' | \"
   // For some reason fastparse needs the \ escaped
