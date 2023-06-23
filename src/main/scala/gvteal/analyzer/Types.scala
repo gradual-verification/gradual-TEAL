@@ -65,11 +65,13 @@ sealed trait BuiltinType extends ResolvedType {
 
 object BuiltinType {
   val lookup = Map(
-    "int" -> IntType,
+    "int"    -> IntType,
+    "Int"    -> IntType,
+    "Bytes"  -> StringType,
     "string" -> StringType,
-    "bool" -> BoolType,
-    "char" -> CharType,
-    "void" -> VoidType
+    "bool"   -> BoolType,
+    "char"   -> CharType,
+    "void"   -> VoidType
   )
 }
 

@@ -86,11 +86,16 @@ trait Statements extends Specifications {
     })
 
   def simpleStatement[_: P]: P[Statement] =
-    P(variableStatement | expressionStatement)
+    P(variableStatement | pyVariableStatement | expressionStatement)
 
   def variableStatement[_: P]: P[VariableStatement] =
     P(span(typeReference ~ identifier ~ ("=" ~ expression).?)).map({
       case ((varType, varName, value), span) => VariableStatement(varType, varName, value, span)
+    })
+
+  def pyVariableStatement[_: P]: P[VariableStatement] =
+    P(span(identifier ~ "=" ~ typeReference ~ "(" ~ expression.? ~ ")")).map({
+      case ((varName, varType, value), span) => VariableStatement(varType, varName, value, span)
     })
 
   def expressionStatement[_: P]: P[Statement] = P(span(expression ~/ assignmentTail.?))
