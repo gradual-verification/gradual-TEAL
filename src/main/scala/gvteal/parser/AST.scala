@@ -27,7 +27,7 @@ case class VariableExpression(variable: Identifier, span: SourceSpan) extends Ex
 case class IncrementExpression(value: Expression, operator: IncrementOperator, span: SourceSpan) extends Expression
 //case class PyNaryExpression
 case class BinaryExpression(left: Expression, operator: BinaryOperator.Value, right: Expression, span: SourceSpan) extends Expression
-case class PyBinaryExpression(left: Expression, operator: PyBinaryOperator.Value, right: Expression, span: SourceSpan)
+case class PyBinaryExpression(left: Expression, operator: PyBinaryOperator.Value, right: Expression, span: SourceSpan) extends Expression
 case class UnaryExpression(operand: Expression, operator: UnaryOperator.Value, span: SourceSpan) extends Expression
 case class PyUnaryExpression(operand: Expression, operator: PyUnaryOperator.Value, span: SourceSpan) extends Expression
 case class TernaryExpression(condition: Expression, ifTrue: Expression, ifFalse: Expression, span: SourceSpan) extends Expression
@@ -293,6 +293,7 @@ object PyNaryOperator extends Enumeration {
 object PyBinaryOperator extends Enumeration {
   type PyBinaryOperator = Value
 
+  val PyAdd = Value("Add")
   val PyBitwiseOr = Value("BitwiseOr")
   val PyBitwiseXor = Value("BitwiseXor")
   val PyBitwiseAnd = Value("BitwiseAnd")

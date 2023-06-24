@@ -51,7 +51,7 @@ trait Lexer extends Whitespace {
     P(StringIn("Or", "And", "Add", "Mul", "Concat"));
 
   def pyBinaryOperator[_: P] =
-    P(StringIn("Div", "Mod", "Minus", "ShiftLeft", "ShiftRight",
+    P(StringIn("Add", "Div", "Mod", "Minus", "ShiftLeft", "ShiftRight",
                "Lt", "Le", "Ge", "Gt", "Eq", "Neq",
                "BitwiseAnd", "BitwiseXor", "BitwiseOr"));
 

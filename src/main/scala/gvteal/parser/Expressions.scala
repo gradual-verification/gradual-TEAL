@@ -17,6 +17,7 @@ trait Expressions extends Types {
     "Gt"          -> (7,  PyGreater),
     "ShiftLeft"   -> (8,  PyShiftLeft),
     "ShiftRight"  -> (8,  PyShiftRight),
+    "Add"         -> (9,  PyAdd),
     "Minus"       -> (9,  PySubtract),
     "Div"         -> (10,  PyDivide),
     "Mod"         -> (10,  PyModulus),
@@ -48,43 +49,61 @@ trait Expressions extends Types {
         case (a, None) => a
         case (a, Some((l, r, end))) => TernaryExpression(a, l, r, SourceSpan(a.span.start, end))
     }
+  // def expression[_: P]: P[Expression] =
+  //   P((pyBinaryExpression.map(Left(_)) | binaryExpression.map(Right(_))).rep ~ ("?" ~ expression ~ ":" ~ expression ~~ pos).?).map {
+  //     case (exprs, ternaryPart) => exprs match {
+  //       case Left(pyExpr) :: Nil => pyExpr
+  //       case Right(a) :: Nil if ternaryPart.isEmpty => a
+  //       case Right(a) :: Nil => ternaryPart match {
+  //         case Some((l, r, end)) => TernaryExpression(a, l, r, SourceSpan(a.span.start, end))
+  //         case None => a
+  //       }
+  //       case _ => throw new Exception("Unexpected parsing result.")
+  //     }
+  //   }
 
   def binaryExpression[_: P]: P[Expression] =
-      P(basicExpression ~ (binaryOperator.! ~ basicExpression).rep).map {
-        case (cur, rest) => parseOpPrecedence(cur, rest)
+    P(basicExpression ~ (binaryOperator.! ~ basicExpression).rep).map {
+      case (cur, rest) => parseOpPrecedence(cur, rest)
+    }
+
+  def pyBinaryExpression[_: P]: P[Expression] =
+  P(pyBinaryOperator.! ~ "(" ~ expression ~ "," ~ expression ~ ")").map {
+    case (operator, arg1: Expression, arg2: Expression) =>
+      pyOperators.get(operator) match {
+        case Some((_, binOp)) =>
+          PyBinaryExpression(arg1, binOp, arg2, SourceSpan(arg1.span.start, arg2.span.end))
+        case None =>
+          throw new Exception(s"Invalid operator: $operator")
       }
-
-  // def pyBinaryExpression[_: P]: P[Expression] =
-  //     P(basicExpression ~ (binaryOperator.! ~ basicExpression).rep).map {
-  //       case (cur, rest) => parseOpPrecedence(cur, rest)
-  //     }
+  }
   
-//   def pyParseOpPrecedence(current: Expression, rest: Seq[(String, Expression)]): Expression = {
-//   // Operator precedence climbing algorithm
-//   // Based on https://github.com/databricks/sjsonnet/blob/master/sjsonnet/src/sjsonnet/Parser.scala#L156-L200
-//   var remaining = rest
-//   def climb(minPrec: Int, current: Expression): Expression = {
-//     var result = current
-//     while (
-//       remaining.headOption match {
-//         case None => false
-//         case Some((op, next)) =>
-//           val (prec, binOp) = pyOperators(op)
-//           if (prec < minPrec) false
-//           else {
-//             remaining = remaining.tail
-//             val rhs = climb(prec + 1, next)
-//             result = PyBinaryExpression(result, binOp, rhs, SourceSpan(result.span.start, rhs.span.end))
-//             true
-//           }
-//       }
-//     )()
+  // def pyParseOpPrecedence(current: Expression, rest: Seq[(String, Expression)]): Expression = {
+  //   // Operator precedence climbing algorithm
+  //   // Based on https://github.com/databricks/sjsonnet/blob/master/sjsonnet/src/sjsonnet/Parser.scala#L156-L200
+  //   var remaining = rest
+  //   def climb(minPrec: Int, current: Expression): Expression = {
+  //     var result = current
+  //     while (
+  //       remaining.headOption match {
+  //         case None => false
+  //         case Some((op, next)) =>
+  //           val (prec, binOp) = pyOperators(op)
+  //           if (prec < minPrec) false
+  //           else {
+  //             remaining = remaining.tail
+  //             val rhs = climb(prec + 1, next)
+  //             result = PyBinaryExpression(result, binOp, rhs, SourceSpan(result.span.start, rhs.span.end))
+  //             true
+  //           }
+  //       }
+  //     )()
 
-//     result
-//   }
+  //     result
+  //   }
 
-//   climb(0, current)
-// }
+  //   climb(0, current)
+  // }
 
   def parseOpPrecedence(current: Expression, rest: Seq[(String, Expression)]): Expression = {
     // Operator precedence climbing algorithm

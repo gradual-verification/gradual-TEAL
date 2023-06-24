@@ -39,7 +39,6 @@ class ParserState(
   }
 
 def inSingleLineAnnotation(): ParserState = {
-  println("Switching to SingleLineAnnotation mode")
   new ParserState(
     lines = lines,
     mode = SingleLineAnnotation
