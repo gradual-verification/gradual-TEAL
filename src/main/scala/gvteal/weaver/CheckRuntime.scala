@@ -7,27 +7,27 @@ import gvteal.analyzer.{ErrorSink, ResolvedProgram, Resolver}
 import gvteal.transformer.{DependencyTransformer, IR}
 object CheckRuntime {
   val name = "runtime"
-  private lazy val header: ResolvedProgram = {
-    val runtimeSource = Source.fromResource(name + ".h0").mkString
-    val parsed = Parser.parseProgram(runtimeSource) match {
-      case _: Failure =>
-        throw new WeaverException("Cannot parse runtime header")
-      case Success(value, _) => value
-    }
+  // private lazy val header: ResolvedProgram = {
+  //   val runtimeSource = Source.fromResource(name + ".h0").mkString
+  //   val parsed = Parser.parseProgram(runtimeSource) match {
+  //     case _: Failure =>
+  //       throw new WeaverException("Cannot parse runtime header")
+  //     case Success(value, _) => value
+  //   }
 
-    val errors = new ErrorSink()
-    val resolved = Resolver.resolveProgram(parsed, List(), errors)
-    if (errors.errors.nonEmpty)
-      throw new WeaverException("Cannot resolve runtime header")
+  //   val errors = new ErrorSink()
+  //   val resolved = Resolver.resolveProgram(parsed, List(), errors)
+  //   if (errors.errors.nonEmpty)
+  //     throw new WeaverException("Cannot resolve runtime header")
 
-    resolved
-  }
+  //   resolved
+  // }
 
-  def addToIR(program: IR.Program): CheckRuntime = {
-    val dependency = program.addDependency(name)
-    DependencyTransformer.transform(program, dependency, header)
-    new CheckRuntime(program)
-  }
+  // def addToIR(program: IR.Program): CheckRuntime = {
+  //   val dependency = program.addDependency(name)
+  //   DependencyTransformer.transform(program, dependency, header)
+  //   new CheckRuntime(program)
+  // }
 
   object Names {
     val ownedFieldsStruct = "OwnedFields"
