@@ -69,6 +69,7 @@ object Ast{
     case class BoolOp(op: boolop, values: Seq[expr]) extends expr
     case class BinOp(left: expr, op: operator, right: expr) extends expr
     case class UnaryOp(op: unaryop, operand: expr) extends expr
+    // case class NaryOp
     case class Lambda(args: arguments, body: expr) extends expr
     case class IfExp(test: expr, body: expr, orelse: expr) extends expr
     case class Dict(keys: Seq[expr], values: Seq[expr]) extends expr
@@ -177,4 +178,20 @@ object Ast{
 
   // import name with optional 'as' alias.
   case class alias(name: identifier, asname: Option[identifier])
+
+  /* ============ PyTEAL Extension ============ */
+  case class SourcePosition(line: Int, column: Int, index: Int)
+  case class SourceSpan(start: SourcePosition, end: SourcePosition)
+
+  // Specifications
+  sealed trait Specification extends stmt
+
+  object Specification {
+    case class RequiresSpecification(value: expr, sourceSpan: Option[SourceSpan]) extends Specification
+    case class EnsuresSpecification(value: expr, span: Option[SourceSpan]) extends Specification
+    case class LoopInvariantSpecification(value: expr, span: Option[SourceSpan]) extends Specification
+    case class AssertSpecification(value: expr, span: Option[SourceSpan]) extends Specification
+    case class FoldSpecification(predicate: identifier, arguments: List[expr], span: Option[SourceSpan]) extends Specification
+    case class UnfoldSpecification(predicate: identifier, arguments: List[expr], span: Option[SourceSpan]) extends Specification
+  }
 }

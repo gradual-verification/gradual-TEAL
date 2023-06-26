@@ -186,7 +186,7 @@ class Statements(indent: Int){
   def suite[$: P]: P[Seq[Ast.stmt]] = {
     def deeper: P[Int] = {
       def commentLine = P("\n" ~~ Lexical.nonewlinewscomment.?.map(_ => 0)).map((_, Some("")))
-      def endLine = P("\n" ~~ (" "|"\t").repX(indent + 1).!.map(_.length) ~~ Lexical.comment.!.? )
+      def endLine = P("\n" ~~ (" "|"\t").repX(indent + 1).!.map(_.length) ~~ Lexical.singleLineComment.!.? )
       P( Lexical.nonewlinewscomment.? ~~ ( endLine | commentLine ).repX(1) ).map{
         _.collectFirst{ case (s, None) => s}
       }.filter(_.isDefined).map(_.get)

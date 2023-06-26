@@ -11,10 +11,12 @@ import fastparse.NoWhitespace._
 object Lexical {
   import fastparse._
 
+  /********** Single Line Comments **********/
   def kw[$: P](s: String) = s ~ !(letter | digit | "_")
-  def comment[$: P] = P( "#" ~ CharsWhile(_ != '\n', 0) )
-  def wscomment[$: P] = P( (CharsWhileIn(" \n") | Lexical.comment | "\\\n").rep )
-  def nonewlinewscomment[$: P] = P( (CharsWhileIn(" ") | Lexical.comment | "\\\n").rep )
+  //def comment[$: P] = P( "#" ~ CharsWhile(_ != '\n', 0) )
+  def singleLineComment[$: P]: P[Unit] = P( "#" ~ (!"@" ~ CharsWhile(_ != '\n', 0)) )
+  def wscomment[$: P] = P( (CharsWhileIn(" \n") | Lexical.singleLineComment | "\\\n").rep )
+  def nonewlinewscomment[$: P] = P( (CharsWhileIn(" ") | Lexical.singleLineComment | "\\\n").rep )
 
   def identifier[$: P]: P[Ast.identifier] =
     P( (letter|"_") ~ (letter | digit | "_").rep ).!.filter(!keywordList.contains(_)).map(Ast.identifier.apply)
@@ -75,4 +77,12 @@ object Lexical {
 
 
   def imagnumber[$: P] = P( (floatnumber | intpart) ~ ("j" | "J") )
+
+  /* ============ PyTEAL Extension ============ */
+  // Helper for position
+  //def pos[_: P] = P(Index).map(state.position(_))
+
+  // def span[_: P, T](p: => P[T]): P[(T, Ast.SourceSpan)] = P(pos ~~ p ~~ pos).map({
+  //   case (start, value, end) => (value, Ast.SourceSpan(start, end))
+  // })
 }
