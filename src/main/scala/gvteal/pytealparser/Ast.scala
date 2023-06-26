@@ -187,11 +187,11 @@ object Ast{
   sealed trait Specification extends stmt
 
   object Specification {
-    case class RequiresSpecification(value: expr, sourceSpan: Option[SourceSpan]) extends Specification
-    case class EnsuresSpecification(value: expr, span: Option[SourceSpan]) extends Specification
-    case class LoopInvariantSpecification(value: expr, span: Option[SourceSpan]) extends Specification
-    case class AssertSpecification(value: expr, span: Option[SourceSpan]) extends Specification
-    case class FoldSpecification(predicate: identifier, arguments: List[expr], span: Option[SourceSpan]) extends Specification
-    case class UnfoldSpecification(predicate: identifier, arguments: List[expr], span: Option[SourceSpan]) extends Specification
+    case class RequiresSpecification(value: expr) extends Specification
+    case class EnsuresSpecification(value: expr) extends Specification
+    case class LoopInvariantSpecification(value: expr) extends Specification
+    case class AssertSpecification(value: expr) extends Specification
+    case class FoldSpecification(predicate: identifier, arguments: List[expr]) extends Specification
+    case class UnfoldSpecification(predicate: identifier, arguments: List[expr]) extends Specification
   }
 }

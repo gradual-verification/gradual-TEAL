@@ -10,6 +10,7 @@ import fastparse.NoWhitespace._
  */
 object Lexical {
   import fastparse._
+  val specs = new Specifications
 
   /********** Single Line Comments **********/
   def kw[$: P](s: String) = s ~ !(letter | digit | "_")
@@ -47,7 +48,7 @@ object Lexical {
   def longstring[$: P]: P[String] = P( longstring0("'''") | longstring0("\"\"\"") )
   def longstring0[$: P](delimiter: String) = P( delimiter ~ longstringitem(delimiter).rep.! ~ delimiter)
   def longstringitem[$: P](quote: String): P[Unit] = P( longstringchar(quote) | escapeseq | !quote ~ quote.take(1)  )
-  def longstringchar[$: P](quote: String): P[Unit] = P( CharsWhile(!s"\\${quote(0)}".contains(_)) )
+  def longstringchar[$: P](quote: String): P[Unit] = P( CharsWhile(!s"\\${quote(0)}@".contains(_)) )
 
   def escapeseq[$: P]: P[Unit] = P( "\\" ~ AnyChar )
 
@@ -79,10 +80,13 @@ object Lexical {
   def imagnumber[$: P] = P( (floatnumber | intpart) ~ ("j" | "J") )
 
   /* ============ PyTEAL Extension ============ */
-  // Helper for position
-  //def pos[_: P] = P(Index).map(state.position(_))
+  def annotations[_: P]: P[List[Ast.Specification]] =
+    P(annotation.rep).map(a => a.flatten.toList)
 
-  // def span[_: P, T](p: => P[T]): P[(T, Ast.SourceSpan)] = P(pos ~~ p ~~ pos).map({
-  //   case (start, value, end) => (value, Ast.SourceSpan(start, end))
-  // })
+  def annotation[_: P]: P[Seq[Ast.Specification]] =
+    P(singleLineAnnotation | multiLineAnnotation)
+
+  def singleLineAnnotation[$: P]: P[Seq[Ast.Specification]] = P( "#@" ~ specs.specification.rep.map(_.toSeq) ~ ("\n" | End))
+
+  def multiLineAnnotation[$: P]: P[Seq[Ast.Specification]] = P( "\"\"\"@" ~ specs.specification.rep.map(_.toSeq) ~ "@\"\"\"")
 }
