@@ -25,14 +25,24 @@ object Lexical {
   def uppercase[$: P]  = P( CharIn("A-Z") )
   def digit[$: P]      = P( CharIn("0-9") )
 
+  def pytealInt[$: P] = P ( "Int" ~ "(" ~ Lexical.integer ~ ")")
+  def pytealBytes[$: P] = P ( "Bytes" ~ "(" ~ (Lexical.stringliteral) ~ "," ~ " ".rep() ~ (Lexical.stringliteral) ~ ")")
+
   val keywordList = Set(
     "and",       "del",       "from",      "not",       "while",
     "as",        "elif",      "global",    "or",        "with",
     "assert",    "else",      "if",        "pass",      "yield",
-    "break",     "except",    "import",    "print",
-    "class",     "exec",      "in",        "raise",
-    "continue",  "finally",   "is",        "return",
-    "def",       "for",       "lambda",    "try"
+    "break",     "except",    "import",    "print",     "Add",
+    "class",     "exec",      "in",        "raise",     "Mod",
+    "continue",  "finally",   "is",        "return",    "Lt",
+    "def",       "for",       "lambda",    "try",       "Gt",
+    "Le",        "Ge",        "Minus",     "Mul",       "Div",
+    "Mod",       "Exp",       "Eq",        "Neq",       "And",
+    "Or",        "Not",       "BitwiseAnd","BitwiseOr", "BitwiseXor",
+    "BitwiseNot","BytesLt",   "BytesGt",   "BytesLe",   "BytesGe",
+    "BytesEq",   "BytesNeq",  "BytesAdd",  "BytesMinus","BytesMul",
+    "BytesDiv",  "BytesMod",  "BytesAnd",  "BytesOr",   "BytesXor",
+    "BytesNot",  "BytesZero"
   )
 
   def stringliteral[$: P]: P[String] = P( stringprefix.? ~ (longstring | shortstring) )

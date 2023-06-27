@@ -66,6 +66,11 @@ object Ast{
   // BoolOp() can use left & right?
   sealed trait expr
   object expr{
+
+    //PyTeal operation
+
+    case class PyTealBinOp(op: pytealop ,values: Seq[Any]) extends expr
+
     case class BoolOp(op: boolop, values: Seq[expr]) extends expr
     case class BinOp(left: expr, op: operator, right: expr) extends expr
     case class UnaryOp(op: unaryop, operand: expr) extends expr
@@ -122,6 +127,49 @@ object Ast{
   object boolop{
     case object And extends boolop
     case object Or extends boolop
+  }
+
+  sealed trait pytealop
+  case object pytealop {
+    case object PyTealLt extends pytealop
+    case object PyTealGt extends pytealop
+    case object PyTealLe extends pytealop
+    case object PyTealGe extends pytealop
+    case object PyTealAdd extends pytealop
+    case object PyTealMinus extends pytealop
+    case object PyTealMul extends pytealop
+    case object PyTealDiv extends pytealop
+    case object PyTealMod extends pytealop
+    case object PyTealExp extends pytealop
+    case object PyTealEq extends pytealop
+    case object PyTealNeq extends pytealop
+    case object PyTealAnd extends pytealop
+    case object PyTealOr extends pytealop
+    case object PyTealBitwiseAnd extends pytealop
+    case object PyTealBitwiseOr extends pytealop
+    case object PyTealBitwiseXor extends pytealop
+
+    case object PyTealNot extends pytealop
+    case object PyTealBitwiseNot extends pytealop
+
+    case object PyTealBytesLt extends pytealop
+    case object PyTealBytesGt extends pytealop
+    case object PyTealBytesLe extends pytealop
+    case object PyTealBytesGe extends pytealop
+    case object PyTealBytesAdd extends pytealop
+    case object PyTealBytesMinus extends pytealop
+    case object PyTealBytesMul extends pytealop
+    case object PyTealBytesDiv extends pytealop
+    case object PyTealBytesMod extends pytealop
+    case object PyTealBytesEq extends pytealop
+    case object PyTealBytesNeq extends pytealop
+    case object PyTealBytesAnd extends pytealop
+    case object PyTealBytesOr extends pytealop
+    case object PyTealBytesXor extends pytealop
+
+    case object PyTealBytesNot extends pytealop
+    case object PyTealBytesZero extends pytealop
+
   }
 
   sealed trait operator

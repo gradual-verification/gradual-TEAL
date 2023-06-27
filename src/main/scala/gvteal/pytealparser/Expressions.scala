@@ -77,6 +77,74 @@ object Expressions {
   def Invert[$: P] = op("~", Ast.unaryop.Invert)
   def unary_op[$: P] = P ( UAdd | USub | Invert )
 
+  // PyTeal Operators
+
+  // ---------- Binary Operators --------------
+
+  def PyTealLt[$:P] = op("Lt", Ast.pytealop.PyTealLt)
+  def PyTealGt[$:P] = op("Gt", Ast.pytealop.PyTealGt)
+  def PyTealLe[$:P] = op("Le", Ast.pytealop.PyTealLe)
+  def PyTealGe[$:P] = op("Le", Ast.pytealop.PyTealGe)
+  def PyTealAdd[$:P] = op("Add", Ast.pytealop.PyTealAdd)
+  def PyTealMinus[$:P] = op("Minus", Ast.pytealop.PyTealMinus)
+  def PyTealMul[$:P] = op("Mul", Ast.pytealop.PyTealMul)
+  def PyTealDiv[$:P] = op("Div", Ast.pytealop.PyTealDiv)
+  def PyTealMod[$:P] = op("Mod", Ast.pytealop.PyTealMod)
+  def PyTealExp[$:P] = op("Exp", Ast.pytealop.PyTealExp)
+  def PyTealEq[$:P] = op("Eq", Ast.pytealop.PyTealEq)
+  def PyTealNeq[$:P] = op("Neq", Ast.pytealop.PyTealNeq)
+  def PyTealAnd[$:P] = op("And", Ast.pytealop.PyTealAnd)
+  def PyTealOr[$:P] = op("Or", Ast.pytealop.PyTealOr)
+  def PyTealBitwiseAnd[$:P] = op("BitwiseAnd", Ast.pytealop.PyTealBitwiseAnd)
+  def PyTealBitwiseOr[$:P] = op("BitwiseOr", Ast.pytealop.PyTealBitwiseOr)
+  def PyTealBitwiseXor[$:P] = op("BitwiseXor", Ast.pytealop.PyTealBitwiseXor)
+
+  // ---------- Unary Operators --------------
+
+  def PyTealNot[$:P] = op("Not", Ast.pytealop.PyTealNot)
+  def PyTealBitwiseNot[$:P] = op("BitwiseNot", Ast.pytealop.PyTealBitwiseNot)
+
+  // ---------- ByteSlice Operators --------------
+
+  def PyTealBytesLt[$:P] = op("BytesLt", Ast.pytealop.PyTealBytesLt)
+  def PyTealBytesGt[$:P] = op("BytesGt", Ast.pytealop.PyTealBytesGt)
+  def PyTealBytesLe[$:P] = op("BytesLe", Ast.pytealop.PyTealBytesLe)
+  def PyTealBytesGe[$:P] = op("BytesLe", Ast.pytealop.PyTealBytesGe)
+  def PyTealBytesAdd[$:P] = op("BytesAdd", Ast.pytealop.PyTealBytesAdd)
+  def PyTealBytesMinus[$:P] = op("BytesMinus", Ast.pytealop.PyTealBytesMinus)
+  def PyTealBytesMul[$:P] = op("BytesMul", Ast.pytealop.PyTealBytesMul)
+  def PyTealBytesDiv[$:P] = op("BytesDiv", Ast.pytealop.PyTealBytesDiv)
+  def PyTealBytesMod[$:P] = op("BytesMod", Ast.pytealop.PyTealBytesMod)
+  def PyTealBytesEq[$:P] = op("BytesEq", Ast.pytealop.PyTealBytesEq)
+  def PyTealBytesNeq[$:P] = op("BytesNeq", Ast.pytealop.PyTealBytesNeq)
+  def PyTealBytesAnd[$:P] = op("BytesAnd", Ast.pytealop.PyTealBytesAnd)
+  def PyTealBytesOr[$:P] = op("BytesOr", Ast.pytealop.PyTealBytesOr)
+  def PyTealBytesXor[$:P] = op("BytesXor", Ast.pytealop.PyTealBytesXor)
+
+  // ---------- Unary Operators --------------
+
+  def PyTealBytesNot[$:P] = op("BytesNot", Ast.pytealop.PyTealBytesNot)
+  def PyTealBytesZero[$:P] = op("BytesZero", Ast.pytealop.PyTealBytesZero)
+
+
+  def pyteal_arithematic_op[$: P]: P[Ast.pytealop] = P (PyTealLt | PyTealGt | PyTealLe | PyTealGe | PyTealAdd
+                                                  | PyTealMinus | PyTealMul | PyTealDiv | PyTealMod
+                                                  | PyTealExp | PyTealEq | PyTealNeq | PyTealAnd | PyTealOr 
+                                                  | PyTealBitwiseAnd | PyTealBitwiseOr | PyTealBitwiseXor
+                                                  | PyTealNot | PyTealBitwiseNot)
+  
+  def pyteal_byteslice_arithematic_op[$: P]: P[Ast.pytealop] = P (PyTealBytesLt | PyTealBytesGt | PyTealBytesLe | PyTealBytesGe 
+                                                  | PyTealBytesAdd | PyTealBytesMinus | PyTealBytesMul | PyTealBytesDiv 
+                                                  | PyTealBytesMod | PyTealBytesEq | PyTealBytesNeq | PyTealBytesAnd 
+                                                  | PyTealBytesOr  | PyTealBytesXor | PyTealBytesNot | PyTealBytesZero)
+
+  
+
+
+
+  def pyteal_expr[$: P]: P[Ast.expr] = P ((pyteal_arithematic_op | pyteal_byteslice_arithematic_op) ~ "(" ~ (Lexical.pytealInt | Lexical.pytealBytes | Lexical.identifier).rep(1, sep = ",") ~ ")").map { 
+    case (op, values) => Ast.expr.PyTealBinOp(op, values)
+  }
 
   def Unary[$: P](p: => P[Ast.expr]) =
     (unary_op ~ p).map{ case (op, operand) => Ast.expr.UnaryOp(op, operand) }
@@ -118,7 +186,8 @@ object Expressions {
       "`" ~ testlist1.map(x => Ast.expr.Repr(Ast.expr.Tuple(x, Ast.expr_context.Load))) ~ "`" |
       STRING.rep(1).map(_.mkString).map(Ast.expr.Str.apply) |
       NAME.map(Ast.expr.Name(_, Ast.expr_context.Load)) |
-      NUMBER
+      NUMBER |
+      pyteal_expr
     )
   }
   def list_contents[$: P] = P( test.rep(1, ",") ~ ",".? )

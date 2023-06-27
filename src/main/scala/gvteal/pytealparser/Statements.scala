@@ -57,7 +57,7 @@ class Statements(indent: Int){
   }
   def parameters[$: P]: P[Ast.arguments] = P( "(" ~ varargslist ~ ")" )
 
-  def stmt[$: P]: P[Seq[Ast.stmt]] = P( compound_stmt.map(Seq(_)) | simple_stmt )
+  def stmt[$: P]: P[Seq[Ast.stmt]] = P( compound_stmt.map(Seq(_)) | simple_stmt)
 
   def simple_stmt[$: P]: P[Seq[Ast.stmt]] = P( small_stmt.rep(1, sep = ";") ~ ";".? )
   def small_stmt[$: P]: P[Ast.stmt] = P(
