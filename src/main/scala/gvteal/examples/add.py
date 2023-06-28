@@ -22,8 +22,9 @@ def add_compare():
     int_15 = Int(15)
     int_35 = Int(55)
     
-    add_expr = Add(int_20, int_15)
-    eq_expr = Eq(add_expr, int_35)
+    add_expr = Add(Int(1), Int(2), Int(356))
+    bytes_expr = BytesGt(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))
+
     
     #program = And(requires_clause, eq_expr)    
     #return program
