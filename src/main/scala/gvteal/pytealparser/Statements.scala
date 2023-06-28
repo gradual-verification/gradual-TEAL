@@ -14,6 +14,8 @@ class Statements(indent: Int){
   implicit object whitespace extends fastparse.Whitespace {
     def apply(ctx: P[_]): P[Unit] = Lexical.wscomment(ctx)
   }
+  val specs = new Specifications
+  
   def space[$: P] = P( CharIn(" \n") )
   def NEWLINE[$: P]: P0 = P( "\n" | End )
   def ENDMARKER[$: P]: P0 = P( End )
@@ -196,4 +198,15 @@ class Statements(indent: Int){
     } )
     P( indented | " ".rep ~ simple_stmt )
   }
+
+  /* ============ PyTEAL Extension ============ */
+  def annotations[_: P]: P[List[Ast.Specification]] =
+    P(annotation.rep).map(a => a.flatten.toList)
+
+  def annotation[_: P]: P[Seq[Ast.Specification]] =
+    P(singleLineAnnotation | multiLineAnnotation)
+
+  def singleLineAnnotation[$: P]: P[Seq[Ast.Specification]] = P( "\n" ~ "#@" ~ specs.specification.rep.map(_.toSeq) ~ ("\n" | End))
+
+  def multiLineAnnotation[$: P]: P[Seq[Ast.Specification]] = P( "\n" ~ "\"\"\"@" ~ specs.specification.rep.map(_.toSeq) ~ "@\"\"\"")
 }

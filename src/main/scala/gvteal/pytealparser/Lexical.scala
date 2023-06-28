@@ -10,7 +10,6 @@ import fastparse.NoWhitespace._
  */
 object Lexical {
   import fastparse._
-  val specs = new Specifications
 
   /********** Single Line Comments **********/
   def kw[$: P](s: String) = s ~ !(letter | digit | "_")
@@ -78,15 +77,4 @@ object Lexical {
 
 
   def imagnumber[$: P] = P( (floatnumber | intpart) ~ ("j" | "J") )
-
-  /* ============ PyTEAL Extension ============ */
-  def annotations[_: P]: P[List[Ast.Specification]] =
-    P(annotation.rep).map(a => a.flatten.toList)
-
-  def annotation[_: P]: P[Seq[Ast.Specification]] =
-    P(singleLineAnnotation | multiLineAnnotation)
-
-  def singleLineAnnotation[$: P]: P[Seq[Ast.Specification]] = P( "#@" ~ specs.specification.rep.map(_.toSeq) ~ ("\n" | End))
-
-  def multiLineAnnotation[$: P]: P[Seq[Ast.Specification]] = P( "\"\"\"@" ~ specs.specification.rep.map(_.toSeq) ~ "@\"\"\"")
 }
