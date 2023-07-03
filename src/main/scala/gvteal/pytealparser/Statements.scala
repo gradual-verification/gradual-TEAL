@@ -45,7 +45,10 @@ class Statements(indent: Int){
   }
 
   def decorators[$: P] = P( decorator.rep )
-  def decorated[$: P]: P[Ast.stmt] = P( decorators ~ (classdef | funcdef) ).map{case (a, b) => b(a)}
+  def decorated[$: P]: P[Ast.stmt] = P( decorators ~ (classdef |  funcdef) ).map{case (a, b) => b(a)}
+
+  def pyteal_decorated[$: P]: P[Ast.stmt] = P( decorators ~ (classdef |  pyteal_funcdef) ).map{case (a, b) => b(a)}
+
   def classdef[$: P]: P[Seq[Ast.expr] => Ast.stmt.ClassDef] =
     P( kw("class") ~/ NAME ~ ("(" ~ testlist.? ~ ")").?.map(_.toSeq.flatten.flatten) ~ ":" ~~ suite ).map{
       case (a, b, c) => Ast.stmt.ClassDef(a, b, c, _)
@@ -55,7 +58,14 @@ class Statements(indent: Int){
   def funcdef[$: P]: P[Seq[Ast.expr] => Ast.stmt.FunctionDef] = P( kw("def") ~/ NAME ~ parameters ~ ":" ~~ suite ).map{
     case (name, args, suite) => Ast.stmt.FunctionDef(name, args, suite, _)
   }
+
+  def pyteal_funcdef[$: P]: P[Seq[Ast.expr] => Ast.stmt.PyTealFunctionDef] = P( kw("def") ~/ NAME ~ pyteal_parameters ~ ":" ~~ suite ).map{
+    case (name, args, suite) => Ast.stmt.PyTealFunctionDef(name, args, suite, _)
+  }
+
   def parameters[$: P]: P[Ast.arguments] = P( "(" ~ varargslist ~ ")" )
+
+  def pyteal_parameters[$: P]: P[Ast.pytealarguments] = P( "(" ~ pyteal_args_list ~ ")" )
 
   def stmt[$: P]: P[Seq[Ast.stmt]] = P( compound_stmt.map(Seq(_)) | simple_stmt)
 
@@ -129,7 +139,7 @@ class Statements(indent: Int){
   }
   def assert_stmt[$: P]: P[Ast.stmt.Assert] = P( kw("assert") ~ test ~ ("," ~ test).? ).map((Ast.stmt.Assert.apply _).tupled)
 
-  def compound_stmt[$: P]: P[Ast.stmt] = P( if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | decorated )
+  def compound_stmt[$: P]: P[Ast.stmt] = P( if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | pyteal_decorated | decorated )
   def if_stmt[$: P]: P[Ast.stmt.If] = {
     def firstIf = P( kw("if") ~/ test ~ ":" ~~ suite )
     def elifs = P( (space_indents ~~ kw("elif") ~/ test ~ ":" ~~ suite).repX )

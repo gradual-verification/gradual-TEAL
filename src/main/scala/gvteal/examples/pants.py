@@ -21,7 +21,7 @@ def add(quantity: abi.Uint64):
     scratchCount = ScratchVar(TealType.uint64)
     return Seq(
         scratchCount.store(App.globalGet(Bytes("Count"))),
-        App.globalPut(Bytes("Count"), scratchCount.load() + quantity.get()),
+        App.globalPut(Bytes("Count"), scratchCount.load() + quantity.get())
     )
 
 @router.method
@@ -29,12 +29,12 @@ def sell(quantity: abi.Uint64):
     scratchCount = ScratchVar(TealType.uint64)
     return Seq(
         scratchCount.store(App.globalGet(Bytes("Count"))),
-        App.globalPut(Bytes("Count"), scratchCount.load() - quantity.get()),
+        App.globalPut(Bytes("Count"), scratchCount.load() - quantity.get())
     )
 
 
 @router.method
-def read_count(*, output: abi.Uint64):
+def read_count(output: abi.Uint64):
     return output.set(App.globalGet(Bytes("Count")))
 
 
