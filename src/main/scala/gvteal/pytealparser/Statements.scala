@@ -14,7 +14,6 @@ class Statements(indent: Int){
   implicit object whitespace extends fastparse.Whitespace {
     def apply(ctx: P[_]): P[Unit] = Lexical.wscomment(ctx)
   }
-  val specs = new Specifications
   
   def space[$: P] = P( CharIn(" \n") )
   def NEWLINE[$: P]: P0 = P( "\n" | End )
@@ -184,6 +183,11 @@ class Statements(indent: Int){
   // NB compile.c makes sure that the default except clause is last
   def except_clause[$: P] = P( space_indents ~ kw("except") ~/ (test ~ ((kw("as") | ",") ~ test).?).? )
 
+  // def specification_stmt[$: P]: P[Seq[Ast.stmt]] = P( singleLineAnnotation | multiLineAnnotation )
+  // def specification_name[$: P]: P[Ast.stmt.Specification] = 
+  //     P( "#@ " ~ (Specifications.requiresSpecification | Specifications.ensuresSpecification | Specifications.assertSpecification | Specifications.loopInvariantSpecification))
+  // def singleLineAnnotation[$: P]: P[Seq[Ast.stmt.Specification]] = P( specification_name.rep(1, sep = "\n") ~ (End | Pass))
+  // def multiLineAnnotation[$: P]: P[Seq[Ast.stmt.Specification]] = P( "\"\"\"@ " ~ specification_name.rep(1, sep = "\n") ~ "@\"\"\"" )
 
   def suite[$: P]: P[Seq[Ast.stmt]] = {
     def deeper: P[Int] = {
@@ -200,13 +204,18 @@ class Statements(indent: Int){
   }
 
   /* ============ PyTEAL Extension ============ */
-  def annotations[_: P]: P[List[Ast.Specification]] =
-    P(annotation.rep).map(a => a.flatten.toList)
+  // def annotations[$: P]: P[List[Ast.specification]] =
+  //   P(annotation.rep).map(a => a.flatten.toList)
 
-  def annotation[_: P]: P[Seq[Ast.Specification]] =
-    P(singleLineAnnotation | multiLineAnnotation)
+  // def annotation[$: P]: P[Seq[Ast.specification]] =
+  //   P(singleLineAnnotation | multiLineAnnotation)
 
-  def singleLineAnnotation[$: P]: P[Seq[Ast.Specification]] = P( "\n" ~ "#@" ~ specs.specification.rep.map(_.toSeq) ~ ("\n" | End))
+  // def singleLineAnnotation[$: P]: P[Seq[Ast.specification]] = P( "#@" ~ requiresSpecification ~ ("\n" | End)).map {
+  //   case(e) => Ast.
+  // }
 
-  def multiLineAnnotation[$: P]: P[Seq[Ast.Specification]] = P( "\n" ~ "\"\"\"@" ~ specs.specification.rep.map(_.toSeq) ~ "@\"\"\"")
+  // def multiLineAnnotation[$: P]: P[Seq[Ast.specification]] = P( "\"\"\"@" ~ requiresSpecification ~ "@\"\"\"").map {
+  //   case(e) => 
+  // }
+
 }

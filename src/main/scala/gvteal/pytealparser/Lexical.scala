@@ -55,9 +55,9 @@ object Lexical {
   def shortstringchar[$: P](quote: String): P[Unit] = P( CharsWhile(!s"\\\n${quote(0)}".contains(_)) )
 
   def longstring[$: P]: P[String] = P( longstring0("'''") | longstring0("\"\"\"") )
-  def longstring0[$: P](delimiter: String) = P( delimiter ~ longstringitem(delimiter).rep.! ~ delimiter)
+  def longstring0[$: P](delimiter: String) = P( delimiter ~ (!CharsWhileIn("@") ~ longstringitem(delimiter)).rep.! ~ delimiter )
   def longstringitem[$: P](quote: String): P[Unit] = P( longstringchar(quote) | escapeseq | !quote ~ quote.take(1)  )
-  def longstringchar[$: P](quote: String): P[Unit] = P( CharsWhile(!s"\\${quote(0)}@".contains(_)) )
+  def longstringchar[$: P](quote: String): P[Unit] = P( CharsWhile(!s"\\${quote(0)}".contains(_)) )
 
   def escapeseq[$: P]: P[Unit] = P( "\\" ~ AnyChar )
 
