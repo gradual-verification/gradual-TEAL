@@ -58,7 +58,7 @@ class Statements(indent: Int){
   }
   def parameters[$: P]: P[Ast.arguments] = P( "(" ~ varargslist ~ ")" )
 
-  def stmt[$: P]: P[Seq[Ast.stmt]] = P( compound_stmt.map(Seq(_)) | simple_stmt)
+  def stmt[$: P]: P[Seq[Ast.stmt]] = P( compound_stmt.map(Seq(_)) | simple_stmt )
 
   def simple_stmt[$: P]: P[Seq[Ast.stmt]] = P( small_stmt.rep(1, sep = ";") ~ ";".? )
   def small_stmt[$: P]: P[Ast.stmt] = P(
@@ -130,7 +130,7 @@ class Statements(indent: Int){
   }
   def assert_stmt[$: P]: P[Ast.stmt.Assert] = P( kw("assert") ~ test ~ ("," ~ test).? ).map((Ast.stmt.Assert.apply _).tupled)
 
-  def compound_stmt[$: P]: P[Ast.stmt] = P( if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | decorated )
+  def compound_stmt[$: P]: P[Ast.stmt] = P( specification_stmt | if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | decorated )
   def if_stmt[$: P]: P[Ast.stmt.If] = {
     def firstIf = P( kw("if") ~/ test ~ ":" ~~ suite )
     def elifs = P( (space_indents ~~ kw("elif") ~/ test ~ ":" ~~ suite).repX )
@@ -183,11 +183,11 @@ class Statements(indent: Int){
   // NB compile.c makes sure that the default except clause is last
   def except_clause[$: P] = P( space_indents ~ kw("except") ~/ (test ~ ((kw("as") | ",") ~ test).?).? )
 
-  // def specification_stmt[$: P]: P[Seq[Ast.stmt]] = P( singleLineAnnotation | multiLineAnnotation )
-  // def specification_name[$: P]: P[Ast.stmt.Specification] = 
-  //     P( "#@ " ~ (Specifications.requiresSpecification | Specifications.ensuresSpecification | Specifications.assertSpecification | Specifications.loopInvariantSpecification))
-  // def singleLineAnnotation[$: P]: P[Seq[Ast.stmt.Specification]] = P( specification_name.rep(1, sep = "\n") ~ (End | Pass))
-  // def multiLineAnnotation[$: P]: P[Seq[Ast.stmt.Specification]] = P( "\"\"\"@ " ~ specification_name.rep(1, sep = "\n") ~ "@\"\"\"" )
+  def specification_stmt[$: P]: P[Ast.stmt] = P( singleLineAnnotation | multiLineAnnotation ).map(Ast.stmt.Spec(_))
+  def specification_name[$: P]: P[Ast.stmt.Specification] = 
+  P( "#@ " ~ (Specifications.requiresSpecification | Specifications.ensuresSpecification | Specifications.assertSpecification | Specifications.loopInvariantSpecification))
+  def singleLineAnnotation[$: P]: P[Ast.stmt.Specification] = P( specification_name ~ (End | "\n"))
+  def multiLineAnnotation[$: P]: P[Ast.stmt.Specification] = P( "\"\"\"@ " ~ specification_name ~ "@\"\"\"" )
 
   def suite[$: P]: P[Seq[Ast.stmt]] = {
     def deeper: P[Int] = {

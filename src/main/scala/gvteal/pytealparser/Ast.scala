@@ -72,6 +72,8 @@ object Ast{
       case class FoldSpecification(predicate: identifier, arguments: List[expr]) extends Specification
       case class UnfoldSpecification(predicate: identifier, arguments: List[expr]) extends Specification
     }
+
+    case class Spec(specification: Specification) extends stmt
   }
 
   // BoolOp() can use left & right?

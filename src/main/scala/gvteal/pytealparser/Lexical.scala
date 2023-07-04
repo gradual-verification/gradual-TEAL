@@ -14,7 +14,7 @@ object Lexical {
   /********** Single Line Comments **********/
   def kw[$: P](s: String) = s ~ !(letter | digit | "_")
   //def comment[$: P] = P( "#" ~ CharsWhile(_ != '\n', 0) )
-  def singleLineComment[$: P]: P[Unit] = P( "#" ~ (!"@" ~ CharsWhile(_ != '\n', 0)) )
+  def singleLineComment[$: P]: P[Unit] = P( "//" ~ (!"@" ~ CharsWhile(_ != '\n', 0)) )
   def wscomment[$: P] = P( (CharsWhileIn(" \n") | Lexical.singleLineComment | "\\\n").rep )
   def nonewlinewscomment[$: P] = P( (CharsWhileIn(" ") | Lexical.singleLineComment | "\\\n").rep )
 
