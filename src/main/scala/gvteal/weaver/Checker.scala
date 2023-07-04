@@ -35,23 +35,23 @@ object Checker {
     }
   }
 
-  def insert(program: Collector.CollectedProgram): Unit = {
-    val runtime = CheckRuntime.addToIR(program.program)
+  // def insert(program: Collector.CollectedProgram): Unit = {
+  //   val runtime = CheckRuntime.addToIR(program.program)
 
-    // Add the _id field to each struct
-    // Keep a separate map since the name may be something other than `_id` due
-    // to name collision avoidance
-    val structIdFields = program.program.structs
-      .map(s => (s.name, s.addField(CheckRuntime.Names.id, IR.IntType)))
-      .toMap
+  //   // Add the _id field to each struct
+  //   // Keep a separate map since the name may be something other than `_id` due
+  //   // to name collision avoidance
+  //   val structIdFields = program.program.structs
+  //     .map(s => (s.name, s.addField(CheckRuntime.Names.id, IR.IntType)))
+  //     .toMap
 
-    val implementation =
-      new CheckImplementation(program.program, runtime, structIdFields)
+  //   val implementation =
+  //     new CheckImplementation(program.program, runtime, structIdFields)
 
-    program.methods.values.foreach { method =>
-      insert(program, method, runtime, implementation)
-    }
-  }
+  //   program.methods.values.foreach { method =>
+  //     insert(program, method, runtime, implementation)
+  //   }
+  // }
 
   private def insert(
       programData: CollectedProgram,

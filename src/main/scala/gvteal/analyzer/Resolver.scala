@@ -996,212 +996,161 @@ object Resolver {
       .find(Files.exists(_))
   }
 
-  def resolveProgram(
-      defs: List[Definition],
-      librarySearchPaths: List[String],
-      errors: ErrorSink
-  ): ResolvedProgram = {
-    val scope = Scope(
-      variables = Map.empty,
-      methodDeclarations = Map.empty,
-      methodDefinitions = Map.empty,
-      // functionDefinitions = Map.empty,
-      // functionDeclarations = Map.empty,
-      predicateDeclarations = Map.empty,
-      predicateDefinitions = Map.empty,
-      structDefinitions = Map.empty,
-      typeDefs = Map.empty,
-      libraries = Map.empty,
-      errors
-    )
+  // def resolveProgram(
+  //     defs: List[Definition],
+  //     librarySearchPaths: List[String],
+  //     errors: ErrorSink
+  // ): ResolvedProgram = {
+  //   val scope = Scope(
+  //     variables = Map.empty,
+  //     methodDeclarations = Map.empty,
+  //     methodDefinitions = Map.empty,
+  //     // functionDefinitions = Map.empty,
+  //     // functionDeclarations = Map.empty,
+  //     predicateDeclarations = Map.empty,
+  //     predicateDefinitions = Map.empty,
+  //     structDefinitions = Map.empty,
+  //     typeDefs = Map.empty,
+  //     libraries = Map.empty,
+  //     errors
+  //   )
 
-    val (_, program) = resolveProgram(defs, librarySearchPaths, scope)
-    program
-  }
+  //   val (_, program) = resolveProgram(defs, librarySearchPaths, scope)
+  //   program
+  // }
 
-  def resolveProgram(
-      program: List[Definition],
-      librarySearchPaths: List[String],
-      initialScope: Scope
-  ): (Scope, ResolvedProgram) = {
-    val methodDeclarations = ListBuffer[ResolvedMethodDeclaration]()
-    val methodDefinitions = ListBuffer[ResolvedMethodDefinition]()
-    // val functionDefinitions = ListBuffer[ResolvedFunctionDefinition]()
-    // val functionDeclarations = ListBuffer[ResolvedFunctionDeclaration]()
-    val predicateDeclarations = ListBuffer[ResolvedPredicateDeclaration]()
-    val predicateDefinitions = ListBuffer[ResolvedPredicateDefinition]()
-    val structDefinitions = ListBuffer[ResolvedStructDefinition]()
-    val types = ListBuffer[ResolvedTypeDef]()
-    // val dependencies = ListBuffer[ResolvedUseDeclaration]()
-    val simpleDependencies = ListBuffer[ResolvedImportSimpleDeclaration]()
-    val compoundDependencies = ListBuffer[ResolvedImportCompoundDeclaration]()
-    var scope = initialScope
+  // def resolveProgram(
+  //     program: List[Definition],
+  //     librarySearchPaths: List[String],
+  //     initialScope: Scope
+  // ): (Scope, ResolvedProgram) = {
+  //   val methodDeclarations = ListBuffer[ResolvedMethodDeclaration]()
+  //   val methodDefinitions = ListBuffer[ResolvedMethodDefinition]()
+  //   // val functionDefinitions = ListBuffer[ResolvedFunctionDefinition]()
+  //   // val functionDeclarations = ListBuffer[ResolvedFunctionDeclaration]()
+  //   val predicateDeclarations = ListBuffer[ResolvedPredicateDeclaration]()
+  //   val predicateDefinitions = ListBuffer[ResolvedPredicateDefinition]()
+  //   val structDefinitions = ListBuffer[ResolvedStructDefinition]()
+  //   val types = ListBuffer[ResolvedTypeDef]()
+  //   // val dependencies = ListBuffer[ResolvedUseDeclaration]()
+  //   val dependencies = ListBuffer[ResolvedImportDeclaration]()
+  //   var scope = initialScope
 
-    for (definition <- program) {
-      definition match {
-        case u: SimpleImportDeclaration => {
-          val library =
-            // PyTEAL: hardcoded to true isLib check
-            if (true) Some(u.path.value)
-            else {
-              scope.errors.error(u, "Local imports are not implemented")
-              None
-            }
+  //   for (definition <- program) {
+  //     definition match {
+  //       case u: SimpleImportDeclaration => {
+  //         val library =
+  //           // PyTEAL: hardcoded to true isLib check
+  //           if (true) Some(u.path.value)
+  //           else {
+  //             scope.errors.error(u, "Local imports are not implemented")
+  //             None
+  //           }
 
-          val path = library.flatMap(lib => {
-            resolveLibraryPath(lib, librarySearchPaths)
-            // .orElse({
-              // scope.errors.error(u, s"Unable to find library ${u.path.raw}")
-              // None
-            // })
-          })
+  //         val path = library.flatMap(lib => {
+  //           resolveLibraryPath(lib, librarySearchPaths)
+  //           // .orElse({
+  //             // scope.errors.error(u, s"Unable to find library ${u.path.raw}")
+  //             // None
+  //           // })
+  //         })
 
-          val resolved = path.flatMap(path =>
-            scope.libraries.get(path).orElse {
-              val source =
-                try {
-                  Some(Files.readString(path))
-                } catch {
-                  case e: IOException =>
-                    scope.errors.error(u, s"Could not read file '$path'")
-                    None
-                }
+  //         val resolved = path.flatMap(path =>
+  //           scope.libraries.get(path).orElse {
+  //             val source =
+  //               try {
+  //                 Some(Files.readString(path))
+  //               } catch {
+  //                 case e: IOException =>
+  //                   scope.errors.error(u, s"Could not read file '$path'")
+  //                   None
+  //               }
 
-              val parsed = source.flatMap(source => {
-                Parser.parseProgram(source) match {
-                  case Success(value, _) => Some(value)
-                  case fail: Failure =>
-                    val error = fail.trace().longAggregateMsg
-                    scope.errors
-                      .error(u, s"Parsing error while parsing '$path':\n$error")
-                    None
-                }
-              })
+  //             val parsed = source.flatMap(source => {
+  //               Parser.parseProgram(source) match {
+  //                 case Success(value, _) => Some(value)
+  //                 case fail: Failure =>
+  //                   val error = fail.trace().longAggregateMsg
+  //                   scope.errors
+  //                     .error(u, s"Parsing error while parsing '$path':\n$error")
+  //                   None
+  //               }
+  //             })
 
-              parsed.map(parsed => {
-                val (s, p) = resolveProgram(parsed, librarySearchPaths, scope)
-                scope = s.declareLibrary(path, p)
-                p
-              })
-          })
+  //             parsed.map(parsed => {
+  //               val (s, p) = resolveProgram(parsed, librarySearchPaths, scope)
+  //               scope = s.declareLibrary(path, p)
+  //               p
+  //             })
+  //         })
 
-          simpleDependencies += ResolvedImportSimpleDeclaration(
-                                u,
-                                u.path.value,
-                                path,
-                                resolved)
-        }
+  //         dependencies += ResolvedImportDeclaration(u,
+  //                                                u.path.value,
+  //                                                path,
+  //                                                resolved)
+  //       }
 
-        case c: CompoundImportDeclaration => {
-          val librariesP = Some(c.path.value)
+  //       case t: TypeDefinition => {
+  //         val typeDef = resolveTypeDef(t, scope)
+  //         types += typeDef
+  //         scope = scope.defineType(typeDef)
+  //       }
 
-          val path = librariesP.flatMap(lib => {
-            resolveLibraryPath(lib.trim, librarySearchPaths)
-            // .orElse({
-              // scope.errors.error(c, s"Unable to find library ${lib.trim}")
-              // None
-            // })
-          })
+  //       case s: StructDefinition => {
+  //         if (s.fields.isDefined) {
+  //           val definition = resolveStructDefinition(s, scope)
+  //           structDefinitions += definition
+  //           scope = scope.defineStruct(definition)
+  //         }
+  //       }
 
-          val resolved = path.flatMap(path =>
-            scope.libraries.get(path).orElse {
-              val source =
-                try {
-                  Some(Files.readString(path))
-                } catch {
-                  case e: IOException =>
-                    scope.errors.error(c, s"Could not read file '$path'")
-                    None
-                }
+  //       case m: MethodDefinition => {
+  //         val decl = resolveMethodDeclaration(m, scope)
+  //         methodDeclarations += decl
+  //         scope = scope.declareMethod(decl)
 
-              val parsed = source.flatMap(source => {
-                Parser.parseProgram(source) match {
-                  case Success(value, _) => Some(value)
-                  case fail: Failure =>
-                    val error = fail.trace().longAggregateMsg
-                    scope.errors
-                      .error(c, s"Parsing error while parsing '$path':\n$error")
-                    None
-                }
-              })
+  //         if (m.body.isDefined) {
+  //           val definition = resolveMethodDefinition(m, decl, scope)
+  //           methodDefinitions += definition
+  //           scope = scope.defineMethod(definition)
+  //         }
+  //       }
 
-              parsed.map(parsed => {
-                val (s, p) = resolveProgram(parsed, librarySearchPaths, scope)
-                scope = s.declareLibrary(path, p)
-                p
-              })
-          })
+  //       // case f: FunctionDefinition => {
+  //       //   val decl = resolveFunctionDeclaration(f, scope)
+  //       //   functionDeclarations += decl
+  //       //   scope = scope.declareFunction(decl)
 
-          compoundDependencies += ResolvedImportCompoundDeclaration(
-                                  c,
-                                  c.path.value,
-                                  c.functions.value,
-                                  path,
-                                  resolved)
-        }
+  //       //   if(f.body.isDefined) {
+  //       //     val definition = resolveFunctionDefinition(f, decl, scope)
+  //       //     functionDefinitions += definition
+  //       //     scope = scope.defineFunction(definition)
+  //       //   }
+  //       // }
 
-        case t: TypeDefinition => {
-          val typeDef = resolveTypeDef(t, scope)
-          types += typeDef
-          scope = scope.defineType(typeDef)
-        }
+  //       case p: PredicateDefinition => {
+  //         val decl = resolvePredicateDeclaration(p, scope)
+  //         predicateDeclarations += decl
+  //         scope = scope.declarePredicate(decl)
 
-        case s: StructDefinition => {
-          if (s.fields.isDefined) {
-            val definition = resolveStructDefinition(s, scope)
-            structDefinitions += definition
-            scope = scope.defineStruct(definition)
-          }
-        }
+  //         if (p.body.isDefined) {
+  //           val definition = resolvePredicateDefinition(p, decl, scope)
+  //           predicateDefinitions += definition
+  //           scope = scope.definePredicate(definition)
+  //         }
+  //       }
+  //     }
+  //   }
 
-        case m: MethodDefinition => {
-          val decl = resolveMethodDeclaration(m, scope)
-          methodDeclarations += decl
-          scope = scope.declareMethod(decl)
-
-          if (m.body.isDefined) {
-            val definition = resolveMethodDefinition(m, decl, scope)
-            methodDefinitions += definition
-            scope = scope.defineMethod(definition)
-          }
-        }
-
-        // case f: FunctionDefinition => {
-        //   val decl = resolveFunctionDeclaration(f, scope)
-        //   functionDeclarations += decl
-        //   scope = scope.declareFunction(decl)
-
-        //   if(f.body.isDefined) {
-        //     val definition = resolveFunctionDefinition(f, decl, scope)
-        //     functionDefinitions += definition
-        //     scope = scope.defineFunction(definition)
-        //   }
-        // }
-
-        case p: PredicateDefinition => {
-          val decl = resolvePredicateDeclaration(p, scope)
-          predicateDeclarations += decl
-          scope = scope.declarePredicate(decl)
-
-          if (p.body.isDefined) {
-            val definition = resolvePredicateDefinition(p, decl, scope)
-            predicateDefinitions += definition
-            scope = scope.definePredicate(definition)
-          }
-        }
-      }
-    }
-
-    (scope,
-     ResolvedProgram(
-       methodDeclarations = methodDeclarations.toList,
-       methodDefinitions = methodDefinitions.toList,
-       predicateDeclarations = predicateDeclarations.toList,
-       predicateDefinitions = predicateDefinitions.toList,
-       structDefinitions = structDefinitions.toList,
-       types = types.toList,
-       simpleDependencies = simpleDependencies.toList,
-       compoundDependencies = compoundDependencies.toList
-     ))
-  }
+  //   (scope,
+  //    ResolvedProgram(
+  //      methodDeclarations = methodDeclarations.toList,
+  //      methodDefinitions = methodDefinitions.toList,
+  //      predicateDeclarations = predicateDeclarations.toList,
+  //      predicateDefinitions = predicateDefinitions.toList,
+  //      structDefinitions = structDefinitions.toList,
+  //      types = types.toList,
+  //      dependencies = dependencies.toList
+  //    ))
+  // }
 }

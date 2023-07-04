@@ -1,10 +1,17 @@
-import base64
-import base16
-from pyteal import *
-from vote import approval_program,clear_state_program
-from algosdk.v2client import algod
+
+
+
+import "base64"
 
 int main()
-{
- return 0;
-}
+  int a = 4;
+  int b = 6;
+  if (a < b)
+    int c = 4;
+    int d = 6;
+    return d;
+  else
+    int e = 6;
+    int f = 9;
+    return e;
+  return 0;

@@ -1,17 +1,8 @@
 # This example is provided for informational purposes only and has not been audited for security.
 
-from pyteal import *
-
-"""Basic Bank"""
-
+# from pyteal import *
 
 def bank_for_account(receiver):
-    """Only allow receiver to withdraw funds from this contract account.
-
-    Args:
-        receiver (str): Base 32 Algorand address of the receiver.
-    """
-
     is_payment = Txn.type_enum() == TxnType.Payment
     is_single_tx = Global.group_size() == Int(1)
     is_correct_receiver = Txn.receiver() == Addr(receiver)

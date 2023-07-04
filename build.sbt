@@ -6,7 +6,7 @@ lazy val gvteal = (project in file("."))
   .settings(
     name := "gvc0",
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.9" % Test,
-    libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.3.3",
+    libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.0.1",
     libraryDependencies += "org.tpolecat" %% "doobie-core" % "1.0.0-RC1",
     libraryDependencies += "org.tpolecat" %% "doobie-h2" % "1.0.0-RC1", // H2 driver 1.4.199 + type mappings.
     libraryDependencies += "org.tpolecat" %% "doobie-hikari" % "1.0.0-RC1", // HikariCP transactor.

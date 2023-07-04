@@ -48,7 +48,7 @@ object Output {
     val stopTime = Calendar.getInstance().getTime
     val difference = stopTime.getTime - startTime.getTime
     Output.info(stopTime.toString)
-    Output.info(s"Time elapsed: ${Timeout.formatMilliseconds(difference)}")
+    // Output.info(s"Time elapsed: ${Timeout.formatMilliseconds(difference)}")
   }
 
 }
