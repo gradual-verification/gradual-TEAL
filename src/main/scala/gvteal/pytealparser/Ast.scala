@@ -23,7 +23,7 @@ object Ast{
   object stmt{
     case class FunctionDef(name: identifier, args: arguments, body: Seq[stmt], decorator_list: Seq[expr]) extends stmt
     
-    case class PyTealFunctionDef(name: identifier, args: pytealarguments, body: Seq[stmt], decorator_list: Seq[expr]) extends stmt
+    case class PyTealFunctionDef(name: identifier, args: Option[pytealarguments], body: Seq[stmt], decorator_list: Seq[expr]) extends stmt
     
     case class ClassDef(name: identifier, bases: Seq[expr], body: Seq[stmt], decorator_list: Seq[expr]) extends stmt
     case class Return(value: Option[expr]) extends stmt
