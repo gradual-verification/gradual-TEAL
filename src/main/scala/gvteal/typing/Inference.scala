@@ -9,40 +9,47 @@ import gvteal.pytealparser.Ast
   3. Solve these constraints by unification — an algorithm for solving equations based on substitutions.
 */
 
-object Unification {
-  /**
-  * Unify expressions if possible
-  *
-  * @param boundVariables cur bound variables
-  * @param expressions expressions for unification
-  * @return updated bound variables if possible
-  */
-  def apply(boundVariables: Map[Variable, Expression], expressions: Expression*): Try[Map[Variable, Expression]] = 
-  expressions.toList match {
-    case exp1 :: exp2 :: rest ->
+enum Type:
+  case Base(n: String) extends Type
+
+  override def toString: String =
+    import Type.*
+    this match
+      case Base(name) => name
+  end toString
+
+  def name: String =
+    import Type.*
+    this match
+      case Base(name) => name
+      case _ => throw IllegalStateException()
+  end name
+end Type
+object TypePrimitives:
+  val Int: Type = Type.Base("Int")
+  val Byte: Type = Type.Base("Byte")
+end TypePrimitives
+
+// Get all the base type variables that are ever occurred in the given constraint set
+def constraintVariables(constraintSet: Set[(Type, Type)]): Set[Type] =
+  return constraintSet.flatMap {
+    case (left, right) => typeVariables(left) | typeVariables(right)
   }
+end constraintVariables
 
-  /**
-    * build DAG and update variables from leafs
-    *
-    * @param boundVariables cur bound variables
-    * @return updated bound variables
-    */
-    private def buildAnswer(boundVariables: Map[Variable, Expression]): Map[Variable, Expression] = {
-      var visitedVariables: Set[Variable] = Set.empty
+// Get all the base type variables in a type declaration
+def typeVariables(decl: Type): Set[Type] =
+  return decl match
+    case base: Type.Base => Set(base)
+end typeVariables
 
-      def updateVariable(boundVariables: Map[Variable, Expression],
-      parentVariable: Variable,
-      updatedVariable: Variable,
-      parents: Set[Variable]): Map[Variable, Expression] = {
-
-      }
-    }
-    
-    def dfs(boundVariables: Map[Variable, Expression],
-    variable: Variable,
-    expression: Expression,
-    parents: Set[Variable]): Map[Variable, Expression] = {
-
-    }
-}
+// Retrieves the free occurrences of variables in a term
+def freeVariables(root: SyntaxNode): Set[String] =
+  import SyntaxNode.*
+  val symbols = mutable.Stack[String]()
+  def helper(r: SyntaxNode): Set[String] =
+    return r match
+      case _ => Set.empty
+  end helper
+  return helper(root)
+end freeVariables
