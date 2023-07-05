@@ -68,8 +68,8 @@ def pyteal_funcdef[$: P]: P[Seq[Ast.expr] => Ast.stmt.PyTealFunctionDef] = P( kw
 
   def pyteal_parameters[$: P]: P[Ast.pytealarguments] = P( pyteal_args_list )
 
-  //def stmt[$: P]: P[Seq[Ast.stmt]] = P( specification_stmt | compound_stmt.map(Seq(_)) | simple_stmt)
-  def stmt[$: P]: P[Seq[Ast.stmt]] = P( compound_stmt.map(Seq(_)) | simple_stmt)
+  def stmt[$: P]: P[Seq[Ast.stmt]] = P( specification_stmt | compound_stmt.map(Seq(_)) | simple_stmt)
+  //def stmt[$: P]: P[Seq[Ast.stmt]] = P( compound_stmt.map(Seq(_)) | simple_stmt)
 
   def simple_stmt[$: P]: P[Seq[Ast.stmt]] = P( small_stmt.rep(1, sep = ";") ~ ";".? )
   def small_stmt[$: P]: P[Ast.stmt] = P(

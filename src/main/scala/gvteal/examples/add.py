@@ -13,10 +13,12 @@ return
 from pyteal import *
 
 def add_compare():
+    #@ requires true;
     #on_initialization = Txn.application_id() == Int(1)
     #on_update = Txn.application_id() != Int(0)
     
     #requires_clause = Or(on_initialization, on_update)
+    #@ requires true;
     
     int_20 = Int(20)
     int_15 = Int(15)
@@ -29,7 +31,7 @@ def add_compare():
     #program = And(requires_clause, eq_expr)    
     #return program
 
-    return eq_expr
+    return add_expr
 
 if __name__ == "__main__":
     with open('add.teal', 'w') as f:
