@@ -9,6 +9,8 @@ import gvteal.pytealparser.Ast
   3. Solve these constraints by unification — an algorithm for solving equations based on substitutions.
 */
 
+// Missing aliases and the Bindings symbol table for type lookup
+
 enum Type:
   case Base(n: String) extends Type
 
