@@ -1,6 +1,6 @@
 package gvteal.typing
-import gvteal.parser._
+import gvteal.pytealparser._
 
-sealed trait Node{
-  val span: SourceSpan
+object TypedAST extends stmt {
+  case class TypedPyTealFunctionDef(name: identifier, args: arguments, body: Seq[stmt], decorator_list: Seq[expr]) 
 }
