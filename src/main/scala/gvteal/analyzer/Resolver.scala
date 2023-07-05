@@ -19,8 +19,8 @@ case class ResolvedProgram(
     predicateDefinitions: List[ResolvedPredicateDefinition],
     structDefinitions: List[ResolvedStructDefinition],
     types: List[ResolvedTypeDef],
-    // dependencies: List[ResolvedUseDeclaration],
-    dependencies: List[ResolvedImportDeclaration]
+    simpleDependencies: List[ResolvedImportSimpleDeclaration],
+    compoundDependencies: List[ResolvedImportCompoundDeclaration]
 )
 
 case class Scope(

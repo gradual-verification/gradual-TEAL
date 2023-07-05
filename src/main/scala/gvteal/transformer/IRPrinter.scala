@@ -26,13 +26,15 @@ object IRPrinter {
     }
 
     // PyTEAL: Change for imports; hardcoded
-    def printDependency(dependency: IR.Dependency): Unit = {
+    def printDependencySimple(dependency: IR.Dependency): Unit = {
       p.print("#import ")
-      if (true) {
-        p.print("<" + dependency.path + ">")
-      } else {
-        p.print("\"" + dependency.path + "\"")
-      }
+      p.print(dependency.path)
+    }
+    def printDependencyCompound(dependency: IR.Dependency): Unit = {
+      p.print("#from ")
+      p.print(dependency.path)
+      p.print(" import ")
+      p.print(dependency.functions)
     }
     def printStructHeader(struct: IR.Struct): Unit = {
       p.print("struct ")
@@ -410,8 +412,14 @@ object IRPrinter {
     }
 
     for (dep <- program.dependencies) {
-      printDependency(dep)
-      p.println()
+      if (dep.functions == "") {
+        printDependencySimple(dep)
+        p.println()
+      }
+      else {
+        printDependencyCompound(dep)
+        p.println()
+      }
     }
 
     for (struct <- program.structs) {
