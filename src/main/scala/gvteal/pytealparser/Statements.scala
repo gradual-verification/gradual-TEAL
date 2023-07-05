@@ -59,13 +59,13 @@ class Statements(indent: Int){
     case (name, args, suite) => Ast.stmt.FunctionDef(name, args, suite, _)
   }
 
-  def pyteal_funcdef[$: P]: P[Seq[Ast.expr] => Ast.stmt.PyTealFunctionDef] = P( kw("def") ~/ NAME ~ pyteal_parameters ~ ":" ~~ suite ).map{
+def pyteal_funcdef[$: P]: P[Seq[Ast.expr] => Ast.stmt.PyTealFunctionDef] = P( kw("def") ~/ NAME ~ "(" ~ pyteal_parameters.? ~ ")" ~ ":" ~~ suite ).map{
     case (name, args, suite) => Ast.stmt.PyTealFunctionDef(name, args, suite, _)
   }
 
   def parameters[$: P]: P[Ast.arguments] = P( "(" ~ varargslist ~ ")" )
 
-  def pyteal_parameters[$: P]: P[Ast.pytealarguments] = P( "(" ~ pyteal_args_list ~ ")" )
+  def pyteal_parameters[$: P]: P[Ast.pytealarguments] = P( pyteal_args_list )
 
   def stmt[$: P]: P[Seq[Ast.stmt]] = P( compound_stmt.map(Seq(_)) | simple_stmt)
 
