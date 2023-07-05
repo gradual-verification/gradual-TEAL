@@ -97,11 +97,12 @@ class DeclarationsSpec extends AnyFunSuite {
   }
 
   // PyTEAL: Remove isLibrary check
-  test("use library declaration") {
-    val Success(Seq(use: SimpleImportDeclaration), _) = Parser.parseDef("#import <mylib>")
-    assert(use.path.raw == "<mylib>")
+  test("import library declaration") {
+    val Success(Seq(use: SimpleImportDeclaration), _) = Parser.parseDef("#import mylib")
+    assert(use.path.raw == "mylib")
     assert(use.path == "mylib")  }
 
+  // TODO: PyTEAL test "from ... import...; from ... import *"
   test("use path declaration") {
     val Success(Seq(use: SimpleImportDeclaration), _) = Parser.parseDef("#use \"test.c0\"")
     assert(use.path.raw == "\"test.c0\"")
@@ -131,7 +132,7 @@ class DeclarationsSpec extends AnyFunSuite {
   }
 
   test("empty annotation") {
-    assert(Parser.parseDef("//@ ").get.value.isEmpty)
-    assert(Parser.parseDef("/*@  @*/").get.value.isEmpty)
+    assert(Parser.parseDef("#@ ").get.value.isEmpty)
+    assert(Parser.parseDef("\"\"\"@  @\"\"\"").get.value.isEmpty)
   }
 }

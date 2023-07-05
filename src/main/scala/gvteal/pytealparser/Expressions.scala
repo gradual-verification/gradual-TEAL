@@ -77,16 +77,37 @@ object Expressions {
   def Invert[$: P] = op("~", Ast.unaryop.Invert)
   def unary_op[$: P] = P ( UAdd | USub | Invert )
 
+
+  //PyTeal abi Types
+
+  def Uint8[$:P] = op("abi.Uint8", Ast.abitype.Uint8)
+  def Uint16[$:P] = op("abi.Uint16", Ast.abitype.Uint16)
+  def Uint32[$:P] = op("abi.Uint32", Ast.abitype.Uint32)
+  def Uint64[$:P] = op("abi.Uint64", Ast.abitype.Uint64)
+  def Bool[$:P] = op("abi.Bool", Ast.abitype.Bool)
+  def Byte[$:P] = op("abi.Byte", Ast.abitype.Byte)
+  def StaticArray[$:P] = op("abi.StaticArray", Ast.abitype.StaticArray)
+  def Address[$:P] = op("abi.Address", Ast.abitype.Address)
+  def StaticBytes[$:P] = op("abi.StaticBytes", Ast.abitype.StaticBytes)
+  def DynamicArray[$:P] = op("abi.DynamicArray", Ast.abitype.DynamicArray)
+  def DynamicBytes[$:P] = op("abi.DynamicBytes", Ast.abitype.DynamicBytes)
+  def String[$:P] = op("abi.String", Ast.abitype.String)
+  def Tuple[$:P] = op("abi.Tuple", Ast.abitype.Tuple)
+  def NamedTuple[$:P] = op("abi.NamedTuple", Ast.abitype.NamedTuple)
+
   // PyTeal Operators
 
   // ---------- Binary Operators --------------
 
   def PyTealLt[$:P] = op("Lt", Ast.pytealop.PyTealLt)
   def PyTealGt[$:P] = op("Gt", Ast.pytealop.PyTealGt)
+  def PyTealGt2[$:P] = op(">", Ast.pytealop.PyTealGt)
   def PyTealLe[$:P] = op("Le", Ast.pytealop.PyTealLe)
   def PyTealGe[$:P] = op("Le", Ast.pytealop.PyTealGe)
   def PyTealAdd[$:P] = op("Add", Ast.pytealop.PyTealAdd)
+  def PyTealAdd2[$:P] = op("+", Ast.pytealop.PyTealAdd)
   def PyTealMinus[$:P] = op("Minus", Ast.pytealop.PyTealMinus)
+  def PyTealMinus2[$:P] = op("-", Ast.pytealop.PyTealMinus)
   def PyTealMul[$:P] = op("Mul", Ast.pytealop.PyTealMul)
   def PyTealDiv[$:P] = op("Div", Ast.pytealop.PyTealDiv)
   def PyTealMod[$:P] = op("Mod", Ast.pytealop.PyTealMod)
@@ -126,6 +147,10 @@ object Expressions {
   def PyTealBytesNot[$:P] = op("BytesNot", Ast.pytealop.PyTealBytesNot)
   def PyTealBytesZero[$:P] = op("BytesZero", Ast.pytealop.PyTealBytesZero)
 
+  def pytealInt[$: P]: P[Ast.expr] = P ( "Int" ~ "(" ~ Lexical.integer ~ ")").map { case (integer) => Ast.expr.PyTealInt(integer) }
+  def pytealBytes[$: P]: P[Ast.expr] = P ( "Bytes" ~ "(" ~ (Lexical.stringliteral) ~ "," ~ " ".rep() ~ (Lexical.stringliteral) ~ ")").map { case (base, value) => Ast.expr.PyTealBytes(base, value) }
+  def pytealBytesStored[$: P]: P[Ast.expr] = P ( "Bytes" ~ "(" ~ (Lexical.stringliteral) ~ ")").map { case (key) => Ast.expr.PyTealBytesStored(key) }
+
 
   def pyteal_arithematic_op[$: P]: P[Ast.pytealop] = P (PyTealLt | PyTealGt | PyTealLe | PyTealGe | PyTealAdd
                                                   | PyTealMinus | PyTealMul | PyTealDiv | PyTealMod
@@ -138,12 +163,65 @@ object Expressions {
                                                   | PyTealBytesMod | PyTealBytesEq | PyTealBytesNeq | PyTealBytesAnd 
                                                   | PyTealBytesOr  | PyTealBytesXor | PyTealBytesNot | PyTealBytesZero)
 
-  
+  def pyteal_arithematic_op_symbols[$: P]: P[Ast.pytealop] = P (PyTealGt2 | PyTealMinus2 | PyTealAdd2)
 
 
-
-  def pyteal_expr[$: P]: P[Ast.expr] = P ((pyteal_arithematic_op | pyteal_byteslice_arithematic_op) ~ "(" ~ (Lexical.pytealInt | Lexical.pytealBytes | Lexical.identifier).rep(1, sep = ",") ~ ")").map { 
+  def pyteal_operators[$: P]: P[Ast.expr] = P ((pyteal_arithematic_op | pyteal_byteslice_arithematic_op) ~ "(" ~ (pytealInt | pytealBytes | Lexical.identifier).rep(1, sep = ",") ~ ")").map { 
     case (op, values) => Ast.expr.PyTealBinOp(op, values)
+  }
+
+
+  def pyteal_abi_types[$:P]: P[Ast.abitype] = P (Uint8 | Uint16 | Uint32 | Uint64 | Bool | Byte | StaticArray | Address
+                                                  | StaticBytes | DynamicArray | DynamicBytes | String | Tuple | NamedTuple)
+
+
+  def pyteal_args_list[$:P]: P[Ast.pytealarguments] = P ((Lexical.identifier ~ " ".rep() ~ ":" ~ " ".rep() ~ pyteal_abi_types).rep(1, sep = ",")).map {
+    case (args) => Ast.pytealarguments(args)
+  }
+
+  def conditional_expr[$:P]: P[Ast.expr] = P ((if_expr | then_expr).rep(1, sep = ".")).map {
+    case (expressions) => Ast.expr.PyTealConditionalExpr(expressions)
+  }
+
+  def scratch_load[$:P]: P[Ast.expr] = P (Lexical.identifier ~ "." ~ "load" ~ "()").map {
+    case (identifier) => Ast.expr.ScratchLoad(identifier)
+  }
+
+  def scratch_store[$:P]: P[Ast.expr] = P (Lexical.identifier ~ "." ~ "store" ~ "(" ~ (global_get | pytealInt | pytealBytesStored) ~ ")").map {
+    case (identifier, expr) => Ast.expr.ScratchStore(identifier, expr)
+  }
+
+  def get[$:P]: P[Ast.expr] = P (Lexical.identifier ~ "." ~ "get" ~ "()").map {
+    case (identifier) => Ast.expr.Get(identifier)
+  }
+
+  def pyteal_expr[$:P]: P[Ast.expr] = P ((global_get | pytealInt | pytealBytesStored | scratch_load | get | scratch_store | Lexical.identifier) ~ " ".rep() ~ pyteal_arithematic_op_symbols ~ " ".rep() ~ (global_get | pytealInt | pytealBytesStored | scratch_load | get | scratch_store | Lexical.identifier)).map {
+    case (expr1, op, expr2) => Ast.expr.PyTealExpr(expr1, op, expr2)
+  }
+
+  def global_put[$:P]: P[Ast.expr] = P ("App" ~ "." ~ "globalPut" ~ "(" ~ (pytealBytesStored) ~ "," ~ " ".rep() ~ (pytealInt | pyteal_expr | Lexical.identifier) ~ ")").map {
+    case (key, value) => Ast.expr.GlobalPut(key, value)
+  }
+
+  def global_get[$:P]: P[Ast.expr] = P ("App" ~ "." ~ "globalGet" ~ "(" ~ (pytealInt | pytealBytesStored | Lexical.identifier) ~ ")").map {
+    case (key) => Ast.expr.GlobalGet(key)
+  }
+
+
+  def if_expr[$:P]: P[Ast.expr] = P ("If" ~ "(" ~ pyteal_expr ~ ")").map {
+    case (expr) => Ast.expr.PyTealIf(expr)
+  }
+
+  def then_expr[$:P]: P[Ast.expr] = P ("Then" ~ "(" ~ global_put ~ ")").map {
+    case (expr) => Ast.expr.PyTealThen(expr)
+  }
+
+  def approve[$:P]: P[Ast.expr] = P("Approve" ~ "()").map {
+    case (_) => Ast.expr.Approve()
+  }
+
+  def pyteal_seq[$:P]: P[Ast.expr] = P ("Seq" ~ "(" ~ (global_put | approve | conditional_expr | scratch_store).rep(1, sep = ",") ~ ")").map {
+    case (values) => Ast.expr.PyTealSeq(values)
   }
 
   def Unary[$: P](p: => P[Ast.expr]) =
@@ -185,9 +263,12 @@ object Expressions {
       "{" ~ dictorsetmaker ~ "}" |
       "`" ~ testlist1.map(x => Ast.expr.Repr(Ast.expr.Tuple(x, Ast.expr_context.Load))) ~ "`" |
       STRING.rep(1).map(_.mkString).map(Ast.expr.Str.apply) |
+      pyteal_operators |
+      global_put |
+      pyteal_seq |
+      pyteal_expr |
       NAME.map(Ast.expr.Name(_, Ast.expr_context.Load)) |
-      NUMBER |
-      pyteal_expr
+      NUMBER
     )
   }
   def list_contents[$: P] = P( test.rep(1, ",") ~ ",".? )
@@ -224,7 +305,7 @@ object Expressions {
 
   def sliceop[$: P] = P( ":" ~ test.? )
   def exprlist[$: P]: P[Seq[Ast.expr]] = P( expr.rep(1, sep = ",") ~ ",".? )
-  def testlist[$: P]: P[Seq[Ast.expr]] = P( test.rep(1, sep = ",") ~ ",".? )
+  def testlist[$: P]: P[Seq[Ast.expr]] = P( (test | pyteal_seq).rep(1, sep = ",") ~ ",".? )
   def dictorsetmaker[$: P]: P[Ast.expr] = {
     def dict_item = P( test ~ ":" ~ test )
     def dict: P[Ast.expr.Dict] = P(

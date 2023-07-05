@@ -18,13 +18,26 @@ object IR {
     )
 
     // PyTEAL: Remove Boolean for checking if it's a valid dependency
-    def addDependency(
+    def addSimpleDependency(
         path: String,
+        functions: String,
     ): Dependency = {
       if (_dependencies.exists(d => d.path == path))
         throw new IRException(s"Dependency '$path' already exists")
 
-      val newDep = new Dependency(this, path)
+      val newDep = new Dependency(this, path, "")
+      _dependencies += newDep
+      newDep
+    }
+
+    def addCompoundDependency(
+        path: String,
+        functions: String,
+    ): Dependency = {
+      if (_dependencies.exists(d => d.path == path))
+        throw new IRException(s"Dependency '$path' already exists")
+
+      val newDep = new Dependency(this, path, functions)
       _dependencies += newDep
       newDep
     }
@@ -745,6 +758,7 @@ object IR {
   class Dependency(
       program: Program,
       val path: String,
+      val functions: String, 
   ) {
     private val _methods = mutable.ListBuffer[DependencyMethod]()
     private val _structs = mutable.ListBuffer[DependencyStruct]()

@@ -14,7 +14,7 @@ object Lexical {
   /********** Single Line Comments **********/
   def kw[$: P](s: String) = s ~ !(letter | digit | "_")
   //def comment[$: P] = P( "#" ~ CharsWhile(_ != '\n', 0) )
-  def singleLineComment[$: P]: P[Unit] = P( "//" ~ (!"@" ~ CharsWhile(_ != '\n', 0)) )
+  def singleLineComment[$: P]: P[Unit] = P( "#" ~ (!"@" ~ CharsWhile(_ != '\n', 0)) )
   def wscomment[$: P] = P( (CharsWhileIn(" \n") | Lexical.singleLineComment | "\\\n").rep )
   def nonewlinewscomment[$: P] = P( (CharsWhileIn(" ") | Lexical.singleLineComment | "\\\n").rep )
 
@@ -25,8 +25,6 @@ object Lexical {
   def uppercase[$: P]  = P( CharIn("A-Z") )
   def digit[$: P]      = P( CharIn("0-9") )
 
-  def pytealInt[$: P] = P ( "Int" ~ "(" ~ Lexical.integer ~ ")")
-  def pytealBytes[$: P] = P ( "Bytes" ~ "(" ~ (Lexical.stringliteral) ~ "," ~ " ".rep() ~ (Lexical.stringliteral) ~ ")")
 
   val keywordList = Set(
     "and",       "del",       "from",      "not",       "while",
@@ -42,7 +40,8 @@ object Lexical {
     "BitwiseNot","BytesLt",   "BytesGt",   "BytesLe",   "BytesGe",
     "BytesEq",   "BytesNeq",  "BytesAdd",  "BytesMinus","BytesMul",
     "BytesDiv",  "BytesMod",  "BytesAnd",  "BytesOr",   "BytesXor",
-    "BytesNot",  "BytesZero"
+    "BytesNot",  "BytesZero", "Seq",       "If",        "Then",
+    "App" 
   )
 
   def stringliteral[$: P]: P[String] = P( stringprefix.? ~ (longstring | shortstring) )

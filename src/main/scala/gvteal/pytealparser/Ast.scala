@@ -22,6 +22,9 @@ object Ast{
   sealed trait stmt
   object stmt{
     case class FunctionDef(name: identifier, args: arguments, body: Seq[stmt], decorator_list: Seq[expr]) extends stmt
+    
+    case class PyTealFunctionDef(name: identifier, args: pytealarguments, body: Seq[stmt], decorator_list: Seq[expr]) extends stmt
+    
     case class ClassDef(name: identifier, bases: Seq[expr], body: Seq[stmt], decorator_list: Seq[expr]) extends stmt
     case class Return(value: Option[expr]) extends stmt
 
@@ -80,9 +83,34 @@ object Ast{
   sealed trait expr
   object expr{
 
+    case class PyTealInt(integer: Any) extends expr
+    case class PyTealBytes(base: Any, value: Any) extends expr
+    case class PyTealBytesStored(key: Any) extends expr
+
     //PyTeal operation
 
     case class PyTealBinOp(op: pytealop ,values: Seq[Any]) extends expr
+
+    case class PyTealConditionalExpr(expressions: Seq[Any]) extends expr
+
+    //PyTeal If
+
+    case class PyTealIf(expr: Any) extends expr
+    case class PyTealThen(expr: Any) extends expr
+
+    case class PyTealExpr(expr1: Any, op: pytealop, expr2: Any) extends expr
+
+    //PyTeal Seq
+    case class GlobalPut(key: Any, value: Any) extends expr
+    case class GlobalGet(key: Any) extends expr
+
+    case class Approve() extends expr
+
+    case class PyTealSeq(values: Seq[Any]) extends expr
+
+    case class ScratchLoad(identifier: Any) extends expr
+    case class ScratchStore(identifier: Any, expr: Any) extends expr
+    case class Get(identifier: Any) extends expr
 
     case class BoolOp(op: boolop, values: Seq[expr]) extends expr
     case class BinOp(left: expr, op: operator, right: expr) extends expr
@@ -142,14 +170,36 @@ object Ast{
     case object Or extends boolop
   }
 
+  sealed trait abitype
+  case object abitype {
+
+    case object Uint8 extends abitype
+    case object Uint16 extends abitype
+    case object Uint32 extends abitype
+    case object Uint64 extends abitype
+    case object Bool extends abitype
+    case object Byte extends abitype
+    case object StaticArray extends abitype
+    case object Address extends abitype
+    case object StaticBytes extends abitype
+    case object DynamicArray extends abitype
+    case object DynamicBytes extends abitype
+    case object String extends abitype
+    case object Tuple extends abitype
+    case object NamedTuple extends abitype
+
+  }
+
   sealed trait pytealop
   case object pytealop {
     case object PyTealLt extends pytealop
     case object PyTealGt extends pytealop
+    case object PyTealGt2 extends pytealop
     case object PyTealLe extends pytealop
     case object PyTealGe extends pytealop
     case object PyTealAdd extends pytealop
     case object PyTealMinus extends pytealop
+    case object PyTealMinus2 extends pytealop
     case object PyTealMul extends pytealop
     case object PyTealDiv extends pytealop
     case object PyTealMod extends pytealop
@@ -233,6 +283,8 @@ object Ast{
   }
 
   case class arguments(args: Seq[expr], vararg: Option[identifier], kwarg: Option[identifier], defaults: Seq[expr])
+
+  case class pytealarguments(args: Seq[Any])
 
   // keyword arguments supplied to call
   case class keyword(arg: identifier, value: expr)

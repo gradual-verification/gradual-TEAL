@@ -8,19 +8,6 @@ object Specifications{
     def apply(ctx: P[_]): P[Unit] = Lexical.wscomment(ctx)
   }
 
-  // def pyteal_specs[$: P]: P[Ast.specification] = 
-  //       P( "#@ " ~ Specifications.requiresSpecification ~ ("\n" | End))
-
-  // def pyteal_arithematic_op[$: P]: P[Ast.pytealop] = P (PyTealLt | PyTealGt | PyTealLe | PyTealGe | PyTealAdd
-  //                                                 | PyTealMinus | PyTealMul | PyTealDiv | PyTealMod
-  //                                                 | PyTealExp | PyTealEq | PyTealNeq | PyTealAnd | PyTealOr 
-  //                                                 | PyTealBitwiseAnd | PyTealBitwiseOr | PyTealBitwiseXor
-  //                                                 | PyTealNot | PyTealBitwiseNot)
-
-  // def pyteal_expr[$: P]: P[Ast.expr] = P ((pyteal_arithematic_op | pyteal_byteslice_arithematic_op) ~ "(" ~ (Lexical.pytealInt | Lexical.pytealBytes | Lexical.identifier).rep(1, sep = ",") ~ ")").map { 
-  //   case (op, values) => Ast.expr.PyTealBinOp(op, values)
-  // }
-
   def requiresSpecification[$: P]: P[Ast.stmt.Specification] = 
     P(kw("requires") ~ Expressions.test ~ ";").map { e =>
       Ast.stmt.Specification.RequiresSpecification(e)
@@ -41,17 +28,13 @@ object Specifications{
       Ast.stmt.Specification.LoopInvariantSpecification(e)
   }
 
+  def foldSpecification[$: P]: P[Ast.stmt.Specification] = 
+    P(kw("fold") ~ Lexical.identifier ~ "(" ~ Expressions.test.rep(sep = ",") ~ ")" ~ ";").map { case (ident, args) =>
+      Ast.stmt.Specification.FoldSpecification(ident, args.toList)
+  }
   
-  // def foldSpecification[$: P]: P[Ast.specification] = 
-  //   P(kw("fold") ~ Lexical.identifier ~ "(" ~ Expressions.test.rep(sep = ",") ~ ")" ~ ";").map { (ident, args) =>
-  //     Ast.specification.FoldSpecification(ident, args.toList)
-  // }
-
-  // def foldSpecification[_: P]: P[Specification.FoldSpecification] =
-  //   P(kw("fold") ~/ Lexical.identifier ~ "(" ~ test.rep(sep = ",") ~ ")" ~ ";")
-  //     .map { case ((ident, args)) => Specification.FoldSpecification(ident, args.toList) }
-  
-  // def unfoldSpecification[_: P]: P[Specification.UnfoldSpecification] =
-  //   P(kw("unfold") ~/ Lexical.identifier ~ "(" ~ test.rep(sep=",") ~ ")" ~ ";")
-  //     .map { case ((ident, args)) => Specification.UnfoldSpecification(ident, args.toList) }
+  def unfoldSpecification[$: P]: P[Ast.stmt.Specification] =
+    P(kw("unfold") ~ Lexical.identifier ~ "(" ~ Expressions.test.rep(sep=",") ~ ")" ~ ";").map { case (ident, args) =>
+      Ast.stmt.Specification.UnfoldSpecification(ident, args.toList)
+  }
 }
