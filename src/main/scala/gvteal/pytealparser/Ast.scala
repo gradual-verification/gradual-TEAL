@@ -64,6 +64,19 @@ object Ast{
     // XXX Jython will be different
     // col_offset is the byte offset in the utf8 string the parser uses
     case class attributes(lineno: Int, col_offset: Int)
+    
+    // pyTEAL specifications
+    sealed trait Specification extends stmt
+    object Specification {
+      case class RequiresSpecification(value: expr) extends Specification
+      case class EnsuresSpecification(value: expr) extends Specification
+      case class LoopInvariantSpecification(value: expr) extends Specification
+      case class AssertSpecification(value: expr) extends Specification
+      case class FoldSpecification(predicate: identifier, arguments: List[expr]) extends Specification
+      case class UnfoldSpecification(predicate: identifier, arguments: List[expr]) extends Specification
+    }
+
+    case class Spec(specification: Specification) extends stmt
   }
 
   // BoolOp() can use left & right?
@@ -282,16 +295,4 @@ object Ast{
   /* ============ PyTEAL Extension ============ */
   case class SourcePosition(line: Int, column: Int, index: Int)
   case class SourceSpan(start: SourcePosition, end: SourcePosition)
-
-  // Specifications
-  sealed trait Specification extends stmt
-
-  object Specification {
-    case class RequiresSpecification(value: expr, sourceSpan: Option[SourceSpan]) extends Specification
-    case class EnsuresSpecification(value: expr, span: Option[SourceSpan]) extends Specification
-    case class LoopInvariantSpecification(value: expr, span: Option[SourceSpan]) extends Specification
-    case class AssertSpecification(value: expr, span: Option[SourceSpan]) extends Specification
-    case class FoldSpecification(predicate: identifier, arguments: List[expr], span: Option[SourceSpan]) extends Specification
-    case class UnfoldSpecification(predicate: identifier, arguments: List[expr], span: Option[SourceSpan]) extends Specification
-  }
 }

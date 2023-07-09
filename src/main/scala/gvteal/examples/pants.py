@@ -18,6 +18,7 @@ router = Router(
 
 @router.method
 def add(quantity: abi.Uint64):
+    #@ requires true;
     scratchCount = ScratchVar(TealType.uint64)
     return Seq(
         scratchCount.store(App.globalGet(Bytes("Count"))),
