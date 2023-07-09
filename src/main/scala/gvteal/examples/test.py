@@ -1,24 +1,9 @@
-from pyteal import *
 
 
-@router.method
-def read_count(output: abi.Uint64):
-    return output.set(App.globalGet(Bytes("Count")))
+def add_compare(quantity: abi.Uint64, quantity2: abi.Uint64):
+    int_20 = Int(20)
+    int_15 = Int(15)
+    int_35 = Int(55)
 
-if __name__ == "__main__":
-    import os
-    import json
-
-    path = os.path.dirname(os.path.abspath(__file__))
-    approval, clear, contract = router.compile_program(version=8)
-
-    # Dump out the contract as json that can be read in by any of the SDKs
-    with open(os.path.join(path, "artifacts/contract.json"), "w") as f:
-        f.write(json.dumps(contract.dictify(), indent=2))
-
-    # Write out the approval and clear programs
-    with open(os.path.join(path, "artifacts/approval.teal"), "w") as f:
-        f.write(approval)
-
-    with open(os.path.join(path, "artifacts/clear.teal"), "w") as f:
-        f.write(clear)
+    return int_20
+    

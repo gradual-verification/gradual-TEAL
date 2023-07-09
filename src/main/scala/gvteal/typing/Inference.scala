@@ -1,5 +1,4 @@
 package gvteal.typing
-import gvteal.parser.AST
 
 /*
   1. Assign a type or type variable to the expression and each subexpression. For known expressions, like +, — and so on, use the types known for these expressions. Otherwise, use type variables — placeholders for not known types.

@@ -271,7 +271,7 @@ object Ast{
 
   case class arguments(args: Seq[expr], vararg: Option[identifier], kwarg: Option[identifier], defaults: Seq[expr])
 
-  case class pytealarguments(args: Seq[Any])
+  case class pytealarguments(args: Seq[(identifier, abitype)])
 
   // keyword arguments supplied to call
   case class keyword(arg: identifier, value: expr)

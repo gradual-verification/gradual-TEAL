@@ -59,7 +59,7 @@ class Statements(indent: Int){
     case (name, args, suite) => Ast.stmt.FunctionDef(name, args, suite, _)
   }
 
-def pyteal_funcdef[$: P]: P[Seq[Ast.expr] => Ast.stmt.PyTealFunctionDef] = P( kw("def") ~/ NAME ~ "(" ~ pyteal_parameters.? ~ ")" ~ ":" ~~ suite ).map{
+  def pyteal_funcdef[$: P]: P[Seq[Ast.expr] => Ast.stmt.PyTealFunctionDef] = P( kw("def") ~/ NAME ~ "(" ~ pyteal_parameters.? ~ ")" ~ ":" ~~ suite ).map{
     case (name, args, suite) => Ast.stmt.PyTealFunctionDef(name, args, suite, _)
   }
 

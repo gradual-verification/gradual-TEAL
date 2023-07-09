@@ -79,7 +79,34 @@ object Main extends App {
 
   def runPytealParse(config: Config) : Unit = {
     val inputSource = readFile(config.sourceFile.get)
-    println(ParserPyTeal.parseProgram(inputSource))
+    val parsed = ParserPyTeal.parseProgram(inputSource) match {
+      case fail: Failure =>
+        Config.error(s"Parse error:\n${fail.trace().longAggregateMsg}")
+      case Success(value, _) => value
+    }
+
+    //println(parsed)
+
+    val errors = new ErrorSink()
+    val resolved = Validator
+      .validatePyTealParsed(parsed, errors)
+    
+    var ir = IRTransformer.transform(resolved)
+
+    println(IRPrinter.print(ir, includeSpecs = true))
+
+    val silver = IRSilver.toSilver(ir)
+    def silicon = resolveSilicon(config)
+    val stopImmediately = true
+    silicon.start()
+    silicon.verify(silver.program) match {
+      case verifier.Success => if (stopImmediately) silicon.stop()
+      case verifier.Failure(errors) =>
+        val message = errors.map(_.readableMessage).mkString("\n")
+        if (stopImmediately) silicon.stop()
+        throw VerificationException(message)
+    }
+
   }
 
   def run(config: Config): Unit = {

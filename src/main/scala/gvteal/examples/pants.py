@@ -1,7 +1,5 @@
 from pyteal import *
 
-#bjjbjbhjjb
-
 handle_creation = Seq(App.globalPut(Bytes("Count"), Int(0)), Approve())
 
 sell_pant_from_external = Seq(

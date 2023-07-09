@@ -1,6 +1,7 @@
 package gvteal.analyzer
 import fastparse.Parsed.{Failure, Success}
 import gvteal.parser._
+import gvteal.pytealparser._
 
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable.ListBuffer
@@ -995,6 +996,167 @@ object Resolver {
     searchPaths.map(Paths.get(_).resolve(lib + ".h0"))
       .find(Files.exists(_))
   }
+
+  def resolvePyTealProgram(
+      seqs: Seq[Ast.stmt],
+      errors: ErrorSink
+  ): ResolvedProgram = {
+    val scope = Scope(
+      variables = Map.empty,
+      methodDeclarations = Map.empty,
+      methodDefinitions = Map.empty,
+      // functionDefinitions = Map.empty,
+      // functionDeclarations = Map.empty,
+      predicateDeclarations = Map.empty,
+      predicateDefinitions = Map.empty,
+      structDefinitions = Map.empty,
+      typeDefs = Map.empty,
+      libraries = Map.empty,
+      errors
+    )
+
+    val (_, program) = resolvePyTealProgram(seqs, scope)
+    program
+  }
+
+  def resolvePyTealProgram(
+      seqs: Seq[Ast.stmt],
+      initialScope: Scope
+  ): (Scope, ResolvedProgram) = {
+    val methodDeclarations = ListBuffer[ResolvedMethodDeclaration]()
+    val methodDefinitions = ListBuffer[ResolvedMethodDefinition]()
+    // val functionDefinitions = ListBuffer[ResolvedFunctionDefinition]()
+    // val functionDeclarations = ListBuffer[ResolvedFunctionDeclaration]()
+    val predicateDeclarations = ListBuffer[ResolvedPredicateDeclaration]()
+    val predicateDefinitions = ListBuffer[ResolvedPredicateDefinition]()
+    val structDefinitions = ListBuffer[ResolvedStructDefinition]()
+    val types = ListBuffer[ResolvedTypeDef]()
+    // val dependencies = ListBuffer[ResolvedUseDeclaration]()
+    // val dependencies = ListBuffer[ResolvedImportDeclaration]()
+    val simpleDependencies = ListBuffer[ResolvedImportSimpleDeclaration]()
+    val compoundDependencies = ListBuffer[ResolvedImportCompoundDeclaration]()
+    var scope = initialScope
+
+    for (seq <- seqs) {
+      seq match {
+        case p: Ast.stmt.PyTealFunctionDef => {
+          val name = p.name.name
+          val args = p.args
+          val body = p.body
+          var blocks: Array[Statement] = Array()
+          var argsList: List[(String, Type)] = Nil
+          val arguments = args match {
+            case Some(x) => x.args
+            case None => Seq()
+          }
+
+          for (arg <- arguments) {
+            argsList = argsList :+ (arg._1.name, if (arg._2 == "Uint64") namedType("int") else namedType("int"))
+          }
+
+          for (stmt <- body) {
+            stmt match {
+              case r: Ast.stmt.Return => {
+                //println(r)
+                for (valu <- r.value) {
+                  var valuName = valu.asInstanceOf[Ast.expr.Name]
+                  blocks = blocks :+ ReturnStatement(Some(varRef(valuName.id.name)), null)
+                }
+              }
+              case a: Ast.stmt.Assign => {
+                var names: Array[String] = Array()
+                var values: Array[Int] = Array() 
+                for (target <- a.targets) {
+                  var assignName = target.asInstanceOf[Ast.expr.Name]
+                  names = names :+ assignName.id.name
+                }
+                
+                val value = a.value.asInstanceOf[Ast.expr.Call]
+                for (valu <- value.args) {
+                  val num = valu.asInstanceOf[Ast.expr.Num]
+                  values = values :+ num.n.toString.toInt
+                }
+
+                names.zipWithIndex.foreach{ case (name, index) => {
+                    blocks = blocks :+ varDef(name, namedType("int"), Some(intVal(values(index))))
+                  } 
+                }
+              }
+            }
+          }
+
+          // println(blocks.mkString(" "))
+
+          val m = methodDef(
+            name,
+            namedType("int"),
+            argsList,
+            Some(
+              block(blocks: _*)
+            )
+          )
+          // val  body = m.body
+          // for (stmt <- body) {
+          //   println(stmt)
+          // }
+          val decl = resolveMethodDeclaration(m, scope)
+          // println(decl)
+          methodDeclarations += decl
+          scope = scope.declareMethod(decl)
+
+          if (m.body.isDefined) {
+            val definition = resolveMethodDefinition(m, decl, scope)
+            methodDefinitions += definition
+            scope = scope.defineMethod(definition)
+          }
+        }
+      }
+    }
+
+    (scope,
+     ResolvedProgram(
+       methodDeclarations = methodDeclarations.toList,
+       methodDefinitions = methodDefinitions.toList,
+       predicateDeclarations = predicateDeclarations.toList,
+       predicateDefinitions = predicateDefinitions.toList,
+       structDefinitions = structDefinitions.toList,
+       types = types.toList,
+       simpleDependencies = simpleDependencies.toList,
+       compoundDependencies = compoundDependencies.toList
+    ))
+    
+
+  }
+
+   def methodDef(
+      name: String,
+      retType: Type,
+      arguments: List[(String, Type)],
+      body: Option[BlockStatement] = None
+  ) =
+    MethodDefinition(
+      id = Identifier(name, null),
+      returnType = retType,
+      arguments = arguments.map { case (name, typ) =>
+        MemberDefinition(Identifier(name, null), typ, null)
+      },
+      body = body,
+      specifications = List.empty,
+      span = null
+    )
+
+    def namedType(name: String): Type = NamedType(Identifier(name, null), null)
+    def varDef(name: String, typ: Type, value: Option[Expression]) =
+      VariableStatement(typ, Identifier(name, null), value, null)
+
+    def varRef(name: String) = VariableExpression(Identifier(name, null), null)
+    
+    def block(body: Statement*) =
+      BlockStatement(body.toList, null, List(), List())
+    
+    def intVal(value: Int) = IntegerExpression(value.toString(), value, null)
+
+
 
   // def resolveProgram(
   //     defs: List[Definition],

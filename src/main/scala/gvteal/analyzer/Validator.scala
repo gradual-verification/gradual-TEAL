@@ -1,6 +1,6 @@
 package gvteal.analyzer
 
-import gvteal.parser.Definition
+import gvteal.pytealparser._
 
 object Validator {
   // def validateParsed(
@@ -12,6 +12,16 @@ object Validator {
   //   (if (errors.errors.isEmpty) Some(result) else None)
   //     .filter(validate(_, errors))
   // }
+
+  def validatePyTealParsed(
+      defn: Seq[Ast.stmt],
+      errors: ErrorSink
+  ) : ResolvedProgram = {
+    val result = Resolver.resolvePyTealProgram(defn, errors)
+    // (if (errors.errors.isEmpty) Some(result) else None)
+    //   .filter(validate(_, errors))
+    result
+  }
 
   def validate(program: ResolvedProgram, errors: ErrorSink): Boolean = {
     TypeChecker.check(program, errors)
