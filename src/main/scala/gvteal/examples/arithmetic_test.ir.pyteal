@@ -1,0 +1,34 @@
+int arithmetic_operation(int quantity, int quantity2);
+
+int arithmetic_operation(int quantity, int quantity2)
+{
+  int int_20 = 0;
+  int int_20_20 = 0;
+  int int_15 = 0;
+  int int_55 = 0;
+  int random_8359 = 0;
+  int add_40 = 0;
+  int random_513 = 0;
+  int div_8 = 0;
+  bool int_0 = false;
+  int random_6196 = 0;
+  int int_3 = 0;
+  int comp_and = 0;
+  int comp_neq = 0;
+  int comp_or = 0;
+  int_20 = 20;
+  int_20_20 = int_20;
+  int_15 = 15;
+  int_55 = 55;
+  random_8359 = 5;
+  add_40 = int_20_20 + random_8359 + int_15;
+  random_513 = 5;
+  div_8 = add_40 / random_513;
+  int_0 = div_8 >= int_55;
+  random_6196 = 5;
+  int_3 = div_8 + random_6196;
+  comp_and = add_40 && int_55;
+  comp_neq = quantity != comp_and;
+  comp_or = comp_neq || quantity2;
+  return comp_or;
+}

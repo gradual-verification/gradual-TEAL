@@ -1107,6 +1107,8 @@ object Resolver {
 
     for (seq <- seqs) {
       seq match {
+        case i: Ast.stmt.ImportFrom => 
+
         case p: Ast.stmt.PyTealFunctionDef => {
           val name = p.name.name
           val args = p.args
@@ -1124,6 +1126,13 @@ object Resolver {
 
           for (stmt <- body) {
             stmt match {
+              case s: Ast.stmt.Spec => {
+                s.specification match {
+                  case requires: Ast.stmt.Specification.RequiresSpecification => {
+                    
+                  }
+                }
+              }
               case r: Ast.stmt.Return => {
                 for (valu <- r.value) {
                   var valuName = valu.asInstanceOf[Ast.expr.Name]
@@ -1189,8 +1198,6 @@ object Resolver {
 
                   // Assign(List(Name(identifier(int_0),Load)),Compare(Name(identifier(div_8),Load),ArrayBuffer(GtE),ArrayBuffer(Name(identifier(int_55),Load))))
                   case comp: Ast.expr.Compare => {
-                    println("compare ops are" + comp.ops)
-                    println("compare comparators are " + comp.comparators)
                     var compArgs: Array[Expression] = Array() // changed from val to var and rename comArgs to compArgs
                     for (compValu <- comp.comparators) {
                       compValu match {

@@ -13,7 +13,6 @@ return
 from pyteal import *
 
 def add_compare():
-    #@ requires true;
     #on_initialization = Txn.application_id() == Int(1)
     #on_update = Txn.application_id() != Int(0)
     

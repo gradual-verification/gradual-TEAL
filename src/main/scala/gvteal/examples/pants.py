@@ -18,7 +18,8 @@ router = Router(
 
 @router.method
 def add(quantity: abi.Uint64):
-    #@ requires true;
+    #@ requires quantity >= 0;
+    #@ ensures true;
     scratchCount = ScratchVar(TealType.uint64)
     return Seq(
         scratchCount.store(App.globalGet(Bytes("Count"))),
@@ -27,6 +28,8 @@ def add(quantity: abi.Uint64):
 
 @router.method
 def sell(quantity: abi.Uint64):
+    #@ requires quantity >= 0;
+    #@ ensures true;
     scratchCount = ScratchVar(TealType.uint64)
     return Seq(
         scratchCount.store(App.globalGet(Bytes("Count"))),

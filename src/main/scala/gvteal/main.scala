@@ -17,6 +17,9 @@ import gvteal.transformer._
 //   Output,
 //   Timing
 // }
+import gvteal.benchmarking.{
+  Output
+}
 import gvteal.weaver.{Weaver, WeaverException}
 import viper.silicon.Silicon
 import viper.silicon.state.{profilingInfo, runtimeChecks}
@@ -86,23 +89,42 @@ object Main extends App {
     }
 
     println(parsed)
+    val cmdConfig = Config.fromCommandLineArgs(args.toList)
+    val fileNames = getOutputCollection(config.sourceFile.get)
 
-    val errors = new ErrorSink()
-    val resolved = Validator
-      .validatePyTealParsed(parsed, errors)
+    config.mode match {
+      case Config.DefaultMode =>
+        val verifiedOutput = verify(inputSource, fileNames, cmdConfig)
+
+  
+        Output.printTiming(() => {
+          val errors = new ErrorSink()
+          val resolved = Validator
+            .validatePyTealParsed(parsed, errors)
+          
+          var ir = IRTransformer.transform(resolved)
+
+          //println(IRPrinter.print(ir, includeSpecs = true))
+
+        //   val silver = IRSilver.toSilver(ir)
+        //   def silicon = resolveSilicon(config)
+        //   val stopImmediately = true
+        //   println("hh: " + silicon.returnlifetimeState())
+        //   silicon.start()
+        //   println("bfb: " + silicon.returnlifetimeState())
+        //   //println(silver.program)
+        //   //silicon.stop()
+        //   println(silicon.verify(silver.program)) 
+        })
+      case _ =>
+    }
+
     
-    var ir = IRTransformer.transform(resolved)
-
-    println(IRPrinter.print(ir, includeSpecs = true))
-
-    // val silver = IRSilver.toSilver(ir)
-    // def silicon = resolveSilicon(config)
-    // val stopImmediately = true
-    // silicon.start()
-    // silicon.verify(silver.program) match {
+    // match {
     //   case verifier.Success => if (stopImmediately) silicon.stop()
     //   case verifier.Failure(errors) =>
     //     val message = errors.map(_.readableMessage).mkString("\n")
+    //     println("vxc: " + message)
     //     if (stopImmediately) silicon.stop()
     //     throw VerificationException(message)
     // }
@@ -290,84 +312,88 @@ object Main extends App {
     )
   }
 
-  // def verify(inputSource: String,
-  //            fileNames: OutputFileCollection,
-  //            config: Config): VerifiedOutput = {
-  //   def silicon = resolveSilicon(config)
-  //   val output = verifySiliconProvided(silicon, inputSource, fileNames, config)
-  //   output
-  // }
+  def verify(inputSource: String,
+             fileNames: OutputFileCollection,
+             config: Config) = {
+    def silicon = resolveSilicon(config)
+    val output = verifySiliconProvided(silicon, inputSource, fileNames, config)
+    output
+  }
 
-  // def verifySiliconProvided(silicon: Silicon,
-  //                           inputSource: String,
-  //                           fileNames: OutputFileCollection,
-  //                           config: Config,
-  //                           stopImmediately: Boolean = true): VerifiedOutput = {
-  //   profilingInfo.reset
-  //   runtimeChecks.reset
+  def verifySiliconProvided(silicon: Silicon,
+                            inputSource: String,
+                            fileNames: OutputFileCollection,
+                            config: Config,
+                            stopImmediately: Boolean = true) = {
+    profilingInfo.reset
+    runtimeChecks.reset
 
-  //   val translationStart = System.nanoTime()
-  //   val ir =
-  //     generateIR(
-  //       inputSource,
-  //       config.linkedLibraries ++ Defaults.includeDirectories
-  //     )
-  //   val silver = IRSilver.toSilver(ir)
-  //   val translationStop = System.nanoTime()
-  //   val translationTime = translationStop - translationStart
+    val translationStart = System.nanoTime()
+    val parsed = ParserPyTeal.parseProgram(inputSource) match {
+      case fail: Failure =>
+        Config.error(s"Parse error:\n${fail.trace().longAggregateMsg}")
+      case Success(value, _) => value
+    }
+    val errors = new ErrorSink()
+    val resolved = Validator
+      .validatePyTealParsed(parsed, errors)
+    val ir = IRTransformer.transform(resolved)
+    val silver = IRSilver.toSilver(ir)
+    val translationStop = System.nanoTime()
+    val translationTime = translationStop - translationStart
 
-  //   if (config.dump.contains(Config.DumpIR))
-  //     dump(IRPrinter.print(ir, includeSpecs = true))
-  //   else if (config.saveFiles)
-  //     writeFile(
-  //       fileNames.irFileName,
-  //       IRPrinter.print(ir, includeSpecs = true)
-  //     )
-  //   if (config.dump.contains(Config.DumpSilver)) dump(silver.program.toString())
-  //   else if (config.saveFiles)
-  //     writeFile(fileNames.silverFileName, silver.program.toString())
+    if (config.dump.contains(Config.DumpIR))
+      dump(IRPrinter.print(ir, includeSpecs = true))
+    else if (config.saveFiles)
+      writeFile(
+        fileNames.irFileName,
+        IRPrinter.print(ir, includeSpecs = true)
+      )
+    if (config.dump.contains(Config.DumpSilver)) dump(silver.program.toString())
+    else if (config.saveFiles)
+      writeFile(fileNames.silverFileName, silver.program.toString())
 
-  //   val verificationStart = System.nanoTime()
-  //   silicon.start()
-  //   silicon.verify(silver.program) match {
-  //     case verifier.Success => if (stopImmediately) silicon.stop()
-  //     case verifier.Failure(errors) =>
-  //       val message = errors.map(_.readableMessage).mkString("\n")
-  //       if (stopImmediately) silicon.stop()
-  //       throw VerificationException(message)
-  //   }
-  //   val verificationStop = System.nanoTime()
-  //   val verificationTime = verificationStop - verificationStart
+    val verificationStart = System.nanoTime()
+    silicon.start()
+    silicon.verify(silver.program) match {
+      case verifier.Success => if (stopImmediately) silicon.stop()
+      case verifier.Failure(errors) =>
+        val message = errors.map(_.readableMessage).mkString("\n")
+        if (stopImmediately) silicon.stop()
+        throw VerificationException(message)
+    }
+    val verificationStop = System.nanoTime()
+    val verificationTime = verificationStop - verificationStart
 
-  //   if (config.onlyVerify) sys.exit(0)
+    // if (config.onlyVerify) sys.exit(0)
 
-  //   val weavingStart = System.nanoTime()
-  //   try {
-  //     Weaver.weave(ir, silver)
-  //   } catch {
-  //     case t: Throwable =>
-  //       throw new WeaverException(t.getMessage)
-  //   }
-  //   val weavingStop = System.nanoTime()
-  //   val weavingTime = weavingStop - weavingStart
+    // val weavingStart = System.nanoTime()
+    // try {
+    //   Weaver.weave(ir, silver)
+    // } catch {
+    //   case t: Throwable =>
+    //     throw new WeaverException(t.getMessage)
+    // }
+    // val weavingStop = System.nanoTime()
+    // val weavingTime = weavingStop - weavingStart
 
-  //   val c0Source = IRPrinter.print(ir, includeSpecs = false)
-  //   if (config.dump.contains(Config.DumpPYTEAL))
-  //     dumpPYTEAL(c0Source)
-  //   VerifiedOutput(
-  //     silver.program,
-  //     c0Source,
-  //     ProfilingInfo(
-  //       profilingInfo.getTotalConjuncts,
-  //       profilingInfo.getEliminatedConjuncts
-  //     ),
-  //     VerifierTiming(
-  //       translationTime,
-  //       verificationTime,
-  //       weavingTime
-  //     )
-  //   )
-  // }
+    // val c0Source = IRPrinter.print(ir, includeSpecs = false)
+    // if (config.dump.contains(Config.DumpPYTEAL))
+    //   dumpPYTEAL(c0Source)
+    // VerifiedOutput(
+    //   silver.program,
+    //   c0Source,
+    //   ProfilingInfo(
+    //     profilingInfo.getTotalConjuncts,
+    //     profilingInfo.getEliminatedConjuncts
+    //   ),
+    //   VerifierTiming(
+    //     translationTime,
+    //     verificationTime,
+    //     weavingTime
+    //   )
+    // )
+  }
 
   def execute(
       verifiedSource: String,

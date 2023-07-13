@@ -1,0 +1,32 @@
+method arithmetic_operation(quantity: Int, quantity2: Int) returns ($result: Int)
+{
+  var int_20: Int
+  var int_20_20: Int
+  var int_15: Int
+  var int_55: Int
+  var random_8359: Int
+  var add_40: Int
+  var random_513: Int
+  var div_8: Int
+  var int_0: Bool
+  var random_6196: Int
+  var int_3: Int
+  var comp_and: Int
+  var comp_neq: Int
+  var comp_or: Int
+  int_20 := 20
+  int_20_20 := int_20
+  int_15 := 15
+  int_55 := 55
+  random_8359 := 5
+  add_40 := int_20_20 + (random_8359 + int_15)
+  random_513 := 5
+  div_8 := add_40 / random_513
+  int_0 := div_8 >= int_55
+  random_6196 := 5
+  int_3 := div_8 + random_6196
+  comp_and := add_40 && int_55
+  comp_neq := quantity != comp_and
+  comp_or := comp_neq || quantity2
+  $result := comp_or
+}
