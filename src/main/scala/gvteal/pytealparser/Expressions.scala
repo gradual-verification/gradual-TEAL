@@ -147,7 +147,7 @@ object Expressions {
   def PyTealBytesNot[$:P] = op("BytesNot", Ast.pytealop.PyTealBytesNot)
   def PyTealBytesZero[$:P] = op("BytesZero", Ast.pytealop.PyTealBytesZero)
 
-  def pytealInt[$: P]: P[Ast.expr] = P ( "Int" ~ "(" ~ Lexical.integer ~ ")").map { case (integer) => Ast.expr.PyTealInt(integer) }
+  def pytealInt[$: P]: P[Ast.expr] = P ( "Int" ~ "(" ~ Lexical.integer ~ ")").map { case (integer) => Ast.expr.Num(integer) }
   def pytealBytes[$: P]: P[Ast.expr] = P ( "Bytes" ~ "(" ~ (Lexical.stringliteral) ~ "," ~ " ".rep() ~ (Lexical.stringliteral) ~ ")").map { case (base, value) => Ast.expr.PyTealBytes(base, value) }
   def pytealBytesStored[$: P]: P[Ast.expr] = P ( "Bytes" ~ "(" ~ (Lexical.stringliteral) ~ ")").map { case (key) => Ast.expr.PyTealBytesStored(key) }
 

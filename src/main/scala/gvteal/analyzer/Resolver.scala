@@ -6,6 +6,7 @@ import gvteal.pytealparser._
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable.ListBuffer
 import java.io.IOException
+import scala.util.Random
 
 trait ResolvedNode {
   val parsed: Node
@@ -1019,6 +1020,73 @@ object Resolver {
     program
   }
 
+  val opBinMap: Map[String, BinaryOperator.BinaryOperator] = Map(
+    "Eq"                  -> BinaryOperator.Equal,
+    "NotEq"               -> BinaryOperator.NotEqual,
+    "Lt"                  -> BinaryOperator.Less,
+    "LtE"                 -> BinaryOperator.LessEqual,
+    "Gt"                  -> BinaryOperator.Greater,
+    "GtE"                 -> BinaryOperator.GreaterEqual,
+    "Add"                 -> BinaryOperator.Add,
+    "Sub"                 -> BinaryOperator.Subtract,
+    "Mult"                -> BinaryOperator.Multiply,
+    "Div"                 -> BinaryOperator.Divide,
+    "Mod"                 -> BinaryOperator.Modulus,
+    "BitOr"               -> BinaryOperator.BitwiseOr,
+    "BitXor"              -> BinaryOperator.BitwiseXor,
+    "BitAnd"              -> BinaryOperator.BitwiseAnd,
+    "PyTealLt"            -> BinaryOperator.Less,
+    "PyTealGt"            -> BinaryOperator.Greater,
+    "PyTealGt2"           -> BinaryOperator.Greater,
+    "PyTealLe"            -> BinaryOperator.LessEqual,
+    "PyTealGe"            -> BinaryOperator.GreaterEqual,
+    "PyTealAdd"           -> BinaryOperator.Add,
+    "PyTealMinus"         -> BinaryOperator.Subtract,
+    "PyTealMinus2"        -> BinaryOperator.Subtract,
+    "PyTealMul"           -> BinaryOperator.Multiply,
+    "PyTealDiv"           -> BinaryOperator.Divide,
+    "PyTealMod"           -> BinaryOperator.Modulus,
+    //"PyTealExp"           -> BinaryOperator.
+    "PyTealEq"            -> BinaryOperator.Equal,
+    "PyTealNeq"           -> BinaryOperator.NotEqual,
+    "PyTealAnd"           -> BinaryOperator.LogicalAnd,
+    "PyTealOr"            -> BinaryOperator.LogicalOr,
+    "PyTealBitwiseAnd"    -> BinaryOperator.BitwiseAnd,
+    "PyTealBitwiseOr"     -> BinaryOperator.BitwiseOr,
+    "PyTealBitwiseXor"    -> BinaryOperator.BitwiseXor
+
+    // "PyTealBytesLt"
+    // "PyTealBytesGt"
+    // "PyTealBytesLe"
+    // "PyTealBytesGe"
+    // "PyTealBytesAdd"
+    // "PyTealBytesMinus"
+    // "PyTealBytesMul"
+    // "PyTealBytesDiv"
+    // "PyTealBytesMod"
+    // "PyTealBytesEq"
+    // "PyTealBytesNeq"
+    // "PyTealBytesAnd"
+    // "PyTealBytesOr"
+    // "PyTealBytesXor"
+
+    // "PyTealBytesNot"
+    // "PyTealBytesZero"
+  )
+
+  val opUnaryMap: Map[String, UnaryOperator.UnaryOperator] = Map(
+    "Not"                -> UnaryOperator.Not,
+    "PyTealNot"          -> UnaryOperator.Not,
+    "PyTealBitwiseNot"   -> UnaryOperator.BitwiseNot
+  )
+
+  def randomName: String = s"random_${Random.nextInt(10000)}"
+
+  def combineExpressions(expressions: Seq[Expression], op: BinaryOperator.Value): Expression = expressions match {
+    case Seq(head) => head
+    case head +: tail => BinaryExpression(head, op, combineExpressions(tail, op), null)
+  }
+
   def resolvePyTealProgram(
       seqs: Seq[Ast.stmt],
       initialScope: Scope
@@ -1057,7 +1125,6 @@ object Resolver {
           for (stmt <- body) {
             stmt match {
               case r: Ast.stmt.Return => {
-                //println(r)
                 for (valu <- r.value) {
                   var valuName = valu.asInstanceOf[Ast.expr.Name]
                   blocks = blocks :+ ReturnStatement(Some(varRef(valuName.id.name)), null)
@@ -1065,22 +1132,118 @@ object Resolver {
               }
               case a: Ast.stmt.Assign => {
                 var names: Array[String] = Array()
-                var values: Array[Int] = Array() 
+                var values: Array[Expression] = Array() 
                 for (target <- a.targets) {
                   var assignName = target.asInstanceOf[Ast.expr.Name]
                   names = names :+ assignName.id.name
                 }
                 
-                val value = a.value.asInstanceOf[Ast.expr.Call]
-                for (valu <- value.args) {
-                  val num = valu.asInstanceOf[Ast.expr.Num]
-                  values = values :+ num.n.toString.toInt
-                }
+                val value = a.value
 
-                names.zipWithIndex.foreach{ case (name, index) => {
-                    blocks = blocks :+ varDef(name, namedType("int"), Some(intVal(values(index))))
+                // int_15 = Int(15)
+                // deal with Assign(List(Name(identifier(int_15), Load), 
+                // Call(Name(Identifier(Int), Load), ArrayBuffer(Num(15)), ArrayBuffer(), None, None)))
+                value match {
+                  case call: Ast.expr.Call => {
+                    for (valu <- call.args) {
+                      val num = valu.asInstanceOf[Ast.expr.Num]
+                      values = values :+ intVal(num.n.toString.toInt)
+                    }
+                    names.zipWithIndex.foreach{ case (name, index) => {
+                        blocks = blocks :+ varDef(name, namedType("int"), Some(values(index)))
+                      } 
+                    }
                   } 
+                  
+                  case name: Ast.expr.Name => {
+                    values = values :+ VariableExpression(Identifier(name.id.name, null), null)
+                    names.zipWithIndex.foreach{ case (name, index) => {
+                      blocks = blocks :+ varDef(name, namedType("int"), Some(values(index)))
+                      }
+                    }
+                  }
+
+                  // add_expr = Add(Int(1), Int(2), Int(356))
+                  // deal with Assign(List(Name(identifier(add_expr),Load)),
+                  // PyTealBinOp(PyTealAdd,ArrayBuffer(Num(1), Num(2), Num(356))))
+                  case binOp: Ast.expr.PyTealBinOp => {
+                    var argNames: Array[Expression] = Array()
+                    val op = binOp.op.toString
+                    for (valu <- binOp.values) {
+                      valu match {
+                        case num: Ast.expr.Num =>
+                          val argName = randomName
+                          blocks = blocks :+ varDef(argName, namedType("int"), Some(intVal(num.n.toString.toInt)))
+                          argNames = argNames :+ VariableExpression(Identifier(argName, null), null)
+                        case id: Ast.expr.Name =>
+                          argNames = argNames :+ VariableExpression(Identifier(id.id.name, null), null)
+                        case id: Ast.identifier =>
+                          argNames = argNames :+ VariableExpression(Identifier(id.name, null), null)
+                      }
+                    }
+                    val combinedExpr = combineExpressions(argNames, opBinMap.getOrElse(op, BinaryOperator.Add))
+                    for (name <- names) {
+                      blocks = blocks :+ varDef(name, namedType("int"), Some(combinedExpr))
+                    }
+                  }
+
+                  // Assign(List(Name(identifier(int_0),Load)),Compare(Name(identifier(div_8),Load),ArrayBuffer(GtE),ArrayBuffer(Name(identifier(int_55),Load))))
+                  case comp: Ast.expr.Compare => {
+                    println("compare ops are" + comp.ops)
+                    println("compare comparators are " + comp.comparators)
+                    var compArgs: Array[Expression] = Array() // changed from val to var and rename comArgs to compArgs
+                    for (compValu <- comp.comparators) {
+                      compValu match {
+                        case num: Ast.expr.Num =>
+                          compArgs = compArgs :+ intVal(num.n.toString.toInt) 
+                        case id: Ast.expr.Name =>
+                          compArgs = compArgs :+ VariableExpression(Identifier(id.id.name, null), null) 
+                        case id: Ast.identifier =>
+                          compArgs = compArgs :+ VariableExpression(Identifier(id.name, null), null) 
+                        case binOp: Ast.expr.PyTealBinOp => 
+                          var binOpArgs: Array[Expression] = Array()
+                          val op = binOp.op.toString
+                          for (valu <- binOp.values) {
+                              valu match {
+                                  case num: Ast.expr.Num =>
+                                      binOpArgs = binOpArgs :+ intVal(num.n.toString.toInt)
+                                  case id: Ast.expr.Name =>
+                                      binOpArgs = binOpArgs :+ VariableExpression(Identifier(id.id.name, null), null)
+                                  case id: Ast.identifier =>
+                                      binOpArgs = binOpArgs :+ VariableExpression(Identifier(id.name, null), null)
+                              }
+                          }
+                          val combinedBinOpExpr = combineExpressions(binOpArgs, opBinMap.getOrElse(op, BinaryOperator.Add))
+                          compArgs = compArgs :+ combinedBinOpExpr
+                        case call: Ast.expr.Call =>
+                          for (valu <- call.args) {
+                            valu match {
+                              case num: Ast.expr.Num =>
+                                compArgs = compArgs :+ intVal(num.n.toString.toInt)
+                              case id: Ast.expr.Name =>
+                                compArgs = compArgs :+ VariableExpression(Identifier(id.id.name, null), null)
+                              case id: Ast.identifier =>
+                                compArgs = compArgs :+ VariableExpression(Identifier(id.name, null), null)
+                            }
+                          }
+                      }
+                    }
+                    val compareOps = comp.ops.map(op => opBinMap.getOrElse(op.toString, BinaryOperator.Equal)) // changed BinaryOperator.And to BinaryOperator.Equal
+                    val leftExpr = comp.left match {
+                      case num: Ast.expr.Num => intVal(num.n.toString.toInt)
+                      case id: Ast.expr.Name => VariableExpression(Identifier(id.id.name, null), null)
+                      case id: Ast.identifier => VariableExpression(Identifier(id.name, null), null)
+                    }
+                    // Assuming only one comparator and one operator for simplicity
+                    val compareExpr = BinaryExpression(leftExpr, compareOps(0), compArgs(0), null)
+                    names.zipWithIndex.foreach{ case (name, index) => {
+                      blocks = blocks :+ varDef(name, namedType("bool"), Some(compareExpr))
+                    }}
+                  }
                 }
+                
+                // bytes_expr = BytesGt(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))
+                // Assign(List(Name(identifier(bytes_expr),Load)),PyTealBinOp(PyTealBytesGt,ArrayBuffer(PyTealBytes(base16,0xFF), PyTealBytes(base16,0xFE)))), Return(Some(Name(identifier(add_expr),Load)))),ArrayBuffer())
               }
             }
           }
@@ -1155,8 +1318,6 @@ object Resolver {
       BlockStatement(body.toList, null, List(), List())
     
     def intVal(value: Int) = IntegerExpression(value.toString(), value, null)
-
-
 
   // def resolveProgram(
   //     defs: List[Definition],

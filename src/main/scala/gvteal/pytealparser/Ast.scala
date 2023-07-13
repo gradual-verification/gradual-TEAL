@@ -83,13 +83,13 @@ object Ast{
   sealed trait expr
   object expr{
 
-    case class PyTealInt(integer: Any) extends expr
+    //case class PyTealInt(integer: Any) extends expr
     case class PyTealBytes(base: Any, value: Any) extends expr
     case class PyTealBytesStored(key: Any) extends expr
 
     //PyTeal operation
 
-    case class PyTealBinOp(op: pytealop ,values: Seq[Any]) extends expr
+    case class PyTealBinOp(op: pytealop, values: Seq[Any]) extends expr
 
     case class PyTealConditionalExpr(expressions: Seq[Any]) extends expr
 

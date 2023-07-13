@@ -18,14 +18,14 @@ def add_compare():
     #on_update = Txn.application_id() != Int(0)
     
     #requires_clause = Or(on_initialization, on_update)
-    #@ requires true;
     
     int_20 = Int(20)
+    int_20_20 = int_20
     int_15 = Int(15)
     int_35 = Int(55)
     
-    add_expr = Add(Int(1), Int(2), Int(356))
-    bytes_expr = BytesGt(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))
+    add_expr = Add(int_random, Int(2), int_15)
+    #bytes_expr = BytesGt(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))
 
     
     #program = And(requires_clause, eq_expr)    

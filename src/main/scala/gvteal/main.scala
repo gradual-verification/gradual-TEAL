@@ -85,7 +85,7 @@ object Main extends App {
       case Success(value, _) => value
     }
 
-    //println(parsed)
+    println(parsed)
 
     val errors = new ErrorSink()
     val resolved = Validator
@@ -95,17 +95,17 @@ object Main extends App {
 
     println(IRPrinter.print(ir, includeSpecs = true))
 
-    val silver = IRSilver.toSilver(ir)
-    def silicon = resolveSilicon(config)
-    val stopImmediately = true
-    silicon.start()
-    silicon.verify(silver.program) match {
-      case verifier.Success => if (stopImmediately) silicon.stop()
-      case verifier.Failure(errors) =>
-        val message = errors.map(_.readableMessage).mkString("\n")
-        if (stopImmediately) silicon.stop()
-        throw VerificationException(message)
-    }
+    // val silver = IRSilver.toSilver(ir)
+    // def silicon = resolveSilicon(config)
+    // val stopImmediately = true
+    // silicon.start()
+    // silicon.verify(silver.program) match {
+    //   case verifier.Success => if (stopImmediately) silicon.stop()
+    //   case verifier.Failure(errors) =>
+    //     val message = errors.map(_.readableMessage).mkString("\n")
+    //     if (stopImmediately) silicon.stop()
+    //     throw VerificationException(message)
+    // }
 
   }
 
