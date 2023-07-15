@@ -25,17 +25,26 @@ object IRPrinter {
       }
     }
 
+    def printDependency(dependency: IR.Dependency): Unit = {
+      p.print("#use ")
+      if (dependency.isLibrary) {
+        p.print("<" + dependency.path + ">")
+      } else {
+        p.print("\"" + dependency.path + "\"")
+      }
+    }
+
     // PyTEAL: Change for imports; hardcoded
-    def printDependencySimple(dependency: IR.Dependency): Unit = {
-      p.print("#import ")
-      p.print(dependency.path)
-    }
-    def printDependencyCompound(dependency: IR.Dependency): Unit = {
-      p.print("#from ")
-      p.print(dependency.path)
-      p.print(" import ")
-      p.print(dependency.functions)
-    }
+    // def printDependencySimple(dependency: IR.Dependency): Unit = {
+    //   p.print("#use ")
+    //   p.print("<" + dependency.path + ">")
+    // }
+    // def printDependencyCompound(dependency: IR.Dependency): Unit = {
+    //   p.print("#from ")
+    //   p.print(dependency.path)
+    //   p.print(" import ")
+    //   p.print(dependency.isLibrary)
+    // }
     def printStructHeader(struct: IR.Struct): Unit = {
       p.print("struct ")
       p.print(struct.name)
@@ -412,14 +421,15 @@ object IRPrinter {
     }
 
     for (dep <- program.dependencies) {
-      if (dep.functions == "") {
-        printDependencySimple(dep)
-        p.println()
-      }
-      else {
-        printDependencyCompound(dep)
-        p.println()
-      }
+      printDependency(dep)
+      p.println()
+      // if (dep.functions == "") {
+      //   p.println()
+      // }
+      // else {
+      //   printDependencyCompound(dep)
+      //   p.println()
+      // }
     }
 
     for (struct <- program.structs) {
