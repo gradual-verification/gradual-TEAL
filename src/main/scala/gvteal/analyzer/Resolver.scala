@@ -453,15 +453,6 @@ object Resolver {
         return resolveExpression(increment.value, scope, context)
       }
 
-      // case pyBinary: PyBinaryExpression => {
-      //   val left = resolveExpression(pyBinary.left, scope, context)
-      //   val right = resolveExpression(pyBinary.right, scope, context)
-
-      //   pyBinary.operator match {
-      //     case PyBinaryOperator.
-      //   }
-      // }
-
       case binary: BinaryExpression => {
         val left = resolveExpression(binary.left, scope, context)
         val right = resolveExpression(binary.right, scope, context)
@@ -541,16 +532,6 @@ object Resolver {
         unary.operator match {
           case UnaryOperator.Not =>
             ResolvedNot(unary, resolveExpression(unary.operand, scope, context))
-          // case UnaryOperator.Negate =>
-          //   ResolvedNegation(
-          //     unary,
-          //     resolveExpression(unary.operand, scope, context)
-          //   )
-          // case UnaryOperator.Deref =>
-          //   ResolvedDereference(
-          //     unary,
-          //     resolveExpression(unary.operand, scope, context)
-          //   )
           case op => {
             // Log the error and return the base expression
             scope.errors.error(unary, "Unsupported operator " + op.toString())
