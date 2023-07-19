@@ -17,30 +17,42 @@ object IR {
       Helpers.findAvailableName(_structs, "OwnedFields")
     )
 
+    def addDependency(
+        path: String,
+        isLibrary: Boolean
+    ): Dependency = {
+      if (_dependencies.exists(d => d.path == path && d.isLibrary == isLibrary))
+        throw new IRException(s"Dependency '$path' already exists")
+
+      val newDep = new Dependency(this, path, isLibrary)
+      _dependencies += newDep
+      newDep
+    }
+
     // PyTEAL: Remove Boolean for checking if it's a valid dependency
-    def addSimpleDependency(
-        path: String,
-        functions: String,
-    ): Dependency = {
-      if (_dependencies.exists(d => d.path == path))
-        throw new IRException(s"Dependency '$path' already exists")
+    // def addSimpleDependency(
+    //     path: String,
+    //     functions: String,
+    // ): Dependency = {
+    //   if (_dependencies.exists(d => d.path == path))
+    //     throw new IRException(s"Dependency '$path' already exists")
 
-      val newDep = new Dependency(this, path, "")
-      _dependencies += newDep
-      newDep
-    }
+    //   val newDep = new Dependency(this, path, "")
+    //   _dependencies += newDep
+    //   newDep
+    // }
 
-    def addCompoundDependency(
-        path: String,
-        functions: String,
-    ): Dependency = {
-      if (_dependencies.exists(d => d.path == path))
-        throw new IRException(s"Dependency '$path' already exists")
+    // def addCompoundDependency(
+    //     path: String,
+    //     functions: String,
+    // ): Dependency = {
+    //   if (_dependencies.exists(d => d.path == path))
+    //     throw new IRException(s"Dependency '$path' already exists")
 
-      val newDep = new Dependency(this, path, functions)
-      _dependencies += newDep
-      newDep
-    }
+    //   val newDep = new Dependency(this, path, functions)
+    //   _dependencies += newDep
+    //   newDep
+    // }
 
     def addMethod(
         name: String,
@@ -68,6 +80,19 @@ object IR {
       .collect { case (m: Method) => m }
       .toSeq
       .sortBy(_.name)
+
+    def printMethods: Seq[String] = _methods.values
+      .collect { case (m: Method) => m.name }
+      .toSeq
+
+
+    def printMethodByName(name: String): String =
+      _methods.values
+        .collect { case (m: Method) => m }
+        .find(_.name.equals(name)) match {
+        case Some(value) => value.name
+        case None        => "None"
+      }
 
     def predicates: Seq[Predicate] = _predicates.values.toSeq.sortBy(_.name)
 
@@ -754,11 +779,10 @@ object IR {
     }
   }
 
-  // PyTEAL: Removed isLibrary boolean check
   class Dependency(
       program: Program,
       val path: String,
-      val functions: String, 
+      val isLibrary: Boolean
   ) {
     private val _methods = mutable.ListBuffer[DependencyMethod]()
     private val _structs = mutable.ListBuffer[DependencyStruct]()
@@ -796,6 +820,49 @@ object IR {
       struct
     }
   }
+
+  // // PyTEAL: Removed isLibrary boolean check
+  // class Dependency(
+  //     program: Program,
+  //     val path: String,
+  //     val functions: String, 
+  // ) {
+  //   private val _methods = mutable.ListBuffer[DependencyMethod]()
+  //   private val _structs = mutable.ListBuffer[DependencyStruct]()
+
+  //   def methods: Seq[DependencyMethod] = _methods
+  //   def structs: Seq[DependencyStruct] = _structs
+
+  //   def defineMethod(
+  //       name: String,
+  //       returnType: Option[Type]
+  //   ): DependencyMethod = {
+  //     if (program._methods.contains(name)) {
+  //       throw new IRException(
+  //         s"Method '$name' already exists (importing from '$path'"
+  //       )
+  //     }
+
+  //     val method = new DependencyMethod(name, returnType)
+  //     program._methods += method.name -> method
+  //     _methods += method
+  //     method
+  //   }
+
+  //   def defineStruct(name: String): DependencyStruct = {
+  //     val struct = new DependencyStruct(name)
+  //     if (_structs.contains(struct.name)) {
+  //       // TODO: This should not throw if the struct *fields* have not been defined
+  //       throw new IRException(
+  //         s"Struct '${struct.name}' already exists (importing from '$path'"
+  //       )
+  //     }
+
+  //     program._structs += struct.name -> struct
+  //     _structs += struct
+  //     struct
+  //   }
+  // }
 
   class DependencyStruct(val name: String)
       extends StructDefinition {

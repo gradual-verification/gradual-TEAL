@@ -35,23 +35,21 @@ object Checker {
     }
   }
 
-  // def insert(program: Collector.CollectedProgram): Unit = {
-  //   val runtime = CheckRuntime.addToIR(program.program)
+  def insert(program: Collector.CollectedProgram): Unit = {
+    val runtime = CheckRuntime.addToIR(program.program)
 
-  //   // Add the _id field to each struct
-  //   // Keep a separate map since the name may be something other than `_id` due
-  //   // to name collision avoidance
-  //   val structIdFields = program.program.structs
-  //     .map(s => (s.name, s.addField(CheckRuntime.Names.id, IR.IntType)))
-  //     .toMap
-
-  //   val implementation =
-  //     new CheckImplementation(program.program, runtime, structIdFields)
-
-  //   program.methods.values.foreach { method =>
-  //     insert(program, method, runtime, implementation)
-  //   }
-  // }
+    // Add the _id field to each struct
+    // Keep a separate map since the name may be something other than `_id` due
+    // to name collision avoidance
+    val structIdFields = program.program.structs
+      .map(s => (s.name, s.addField(CheckRuntime.Names.id, IR.IntType)))
+      .toMap
+    val implementation =
+      new CheckImplementation(program.program, runtime, structIdFields)
+    program.methods.values.foreach { method =>
+      insert(program, method, runtime, implementation)
+    }
+  }
 
   private def insert(
       programData: CollectedProgram,
@@ -62,7 +60,6 @@ object Checker {
     val program = programData.program
     val method = methodData.method
     val checkMethod = new CheckerMethod(method, programData.temporaryVars)
-
     val callsImprecise: Boolean = methodData.calls.exists(c =>
       programData.methods.get(c.ir.callee.name) match {
         case Some(value) => value.callStyle != PreciseCallStyle
@@ -151,7 +148,7 @@ object Checker {
             runtime.ownedFieldsRef,
             CheckRuntime.Names.primaryOwnedFields)
           val instanceCounter =
-            new IR.FieldMember(ownedFields, runtime.ownedFieldInstanceCounter)
+            new IR.FieldMember(ownedFields, runtime.ownedFieldInstanceCounter.get)
           (Some(ownedFields), instanceCounter)
         } else {
           val instanceCounter =
@@ -170,7 +167,7 @@ object Checker {
             CheckRuntime.Names.primaryOwnedFields
           )
         val instanceCounter =
-          new IR.FieldMember(ownedFields, runtime.ownedFieldInstanceCounter)
+          new IR.FieldMember(ownedFields, runtime.ownedFieldInstanceCounter.get)
         (Some(ownedFields), instanceCounter)
       }
     }

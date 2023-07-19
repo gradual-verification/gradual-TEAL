@@ -9,8 +9,8 @@ object ImplementationValidator {
 
   def validate(program: ResolvedProgram, errors: ErrorSink): Unit = {
     val definedMethods = program.methodDefinitions.toSeq.map(_.name).toSet
-    val librarySimpleMethods = collectLibrarySimpleMethods(program.simpleDependencies, errors)
-    val libraryCompoundMethods = collectLibraryCompoundMethods(program.compoundDependencies, errors)
+    val librarySimpleMethods = collectLibrarySimpleMethods(program.dependencies, errors)
+    // val libraryCompoundMethods = collectLibraryCompoundMethods(program.compoundDependencies, errors)
     val definedPredicates = program.predicateDefinitions.toSeq.map(_.name).toSet
     // TODO: Validate PyTEAL file for import always including pyteal
     if (!definedMethods.contains("main")) {
@@ -22,7 +22,7 @@ object ImplementationValidator {
         expr,
         _ match {
           case invoke: ResolvedInvoke => invoke.method.foreach { m =>
-            if (!librarySimpleMethods.contains(m.name) && !libraryCompoundMethods.contains(m.name) && !definedMethods.contains(m.name))
+            if (!librarySimpleMethods.contains(m.name) && !definedMethods.contains(m.name))
               errors.error(invoke, s"'${invoke.methodName}' is never implemented")
           }
 
@@ -73,7 +73,7 @@ object ImplementationValidator {
 
   @tailrec
   def collectLibrarySimpleMethods(
-      uses: List[ResolvedImportSimpleDeclaration],
+      uses: List[ResolvedUseDeclaration],
       errors: ErrorSink,
       methods: Set[String] = Set(),
       visitedLibraries: Set[String] = Set()
@@ -94,7 +94,7 @@ object ImplementationValidator {
             errors.error(defn, "Imported predicates are not implemented"))
 
           collectLibrarySimpleMethods(
-            program.simpleDependencies ::: rest,
+            program.dependencies ::: rest,
             errors,
             methods ++ program.methodDeclarations.map(_.name),
             visitedLibraries + use.name
@@ -127,7 +127,7 @@ object ImplementationValidator {
             errors.error(defn, "Imported predicates are not implemented"))
 
           collectLibraryCompoundMethods(
-            program.compoundDependencies ::: rest,
+            rest,
             errors,
             methods ++ program.methodDeclarations.map(_.name),
             visitedLibraries + use.name

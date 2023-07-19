@@ -21,8 +21,9 @@ case class ResolvedProgram(
     predicateDefinitions: List[ResolvedPredicateDefinition],
     structDefinitions: List[ResolvedStructDefinition],
     types: List[ResolvedTypeDef],
-    simpleDependencies: List[ResolvedImportSimpleDeclaration],
-    compoundDependencies: List[ResolvedImportCompoundDeclaration]
+    dependencies: List[ResolvedUseDeclaration],
+    // simpleDependencies: List[ResolvedImportSimpleDeclaration]
+    // compoundDependencies: List[ResolvedImportCompoundDeclaration]
 )
 
 case class Scope(
@@ -1080,10 +1081,10 @@ object Resolver {
     val predicateDefinitions = ListBuffer[ResolvedPredicateDefinition]()
     val structDefinitions = ListBuffer[ResolvedStructDefinition]()
     val types = ListBuffer[ResolvedTypeDef]()
-    // val dependencies = ListBuffer[ResolvedUseDeclaration]()
+    val dependencies = ListBuffer[ResolvedUseDeclaration]()
     // val dependencies = ListBuffer[ResolvedImportDeclaration]()
-    val simpleDependencies = ListBuffer[ResolvedImportSimpleDeclaration]()
-    val compoundDependencies = ListBuffer[ResolvedImportCompoundDeclaration]()
+    // val simpleDependencies = ListBuffer[ResolvedImportSimpleDeclaration]()
+    // val compoundDependencies = ListBuffer[ResolvedImportCompoundDeclaration]()
     var scope = initialScope
 
     for (seq <- seqs) {
@@ -1272,8 +1273,9 @@ object Resolver {
        predicateDefinitions = predicateDefinitions.toList,
        structDefinitions = structDefinitions.toList,
        types = types.toList,
-       simpleDependencies = simpleDependencies.toList,
-       compoundDependencies = compoundDependencies.toList
+       dependencies = dependencies.toList
+      //  simpleDependencies = simpleDependencies.toList
+      //  compoundDependencies = compoundDependencies.toList
     ))
     
 

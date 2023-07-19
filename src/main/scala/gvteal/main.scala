@@ -88,33 +88,32 @@ object Main extends App {
       case Success(value, _) => value
     }
 
-    println(parsed)
+    //println(parsed)
     val cmdConfig = Config.fromCommandLineArgs(args.toList)
     val fileNames = getOutputCollection(config.sourceFile.get)
 
     config.mode match {
       case Config.DefaultMode =>
         val verifiedOutput = verify(inputSource, fileNames, cmdConfig)
-
-  
+        println(verifiedOutput)
         Output.printTiming(() => {
-          val errors = new ErrorSink()
-          val resolved = Validator
-            .validatePyTealParsed(parsed, errors)
+          // val errors = new ErrorSink()
+          // val resolved = Validator
+          //   .validatePyTealParsed(parsed, errors)
           
-          var ir = IRTransformer.transform(resolved)
+          //var ir = IRTransformer.transform(resolved)
 
           //println(IRPrinter.print(ir, includeSpecs = true))
 
-        //   val silver = IRSilver.toSilver(ir)
-        //   def silicon = resolveSilicon(config)
-        //   val stopImmediately = true
-        //   println("hh: " + silicon.returnlifetimeState())
-        //   silicon.start()
-        //   println("bfb: " + silicon.returnlifetimeState())
-        //   //println(silver.program)
-        //   //silicon.stop()
-        //   println(silicon.verify(silver.program)) 
+          // val silver = IRSilver.toSilver(ir)
+          // def silicon = resolveSilicon(config)
+          // val stopImmediately = true
+          // println("hh: " + silicon.returnlifetimeState())
+          // silicon.start()
+          // println("bfb: " + silicon.returnlifetimeState())
+          // //println(silver.program)
+          // //silicon.stop()
+          // println(silicon.verify(silver.program)) 
         })
       case _ =>
     }
@@ -364,35 +363,36 @@ object Main extends App {
     }
     val verificationStop = System.nanoTime()
     val verificationTime = verificationStop - verificationStart
-
+    
     // if (config.onlyVerify) sys.exit(0)
 
-    // val weavingStart = System.nanoTime()
-    // try {
-    //   Weaver.weave(ir, silver)
-    // } catch {
-    //   case t: Throwable =>
-    //     throw new WeaverException(t.getMessage)
-    // }
-    // val weavingStop = System.nanoTime()
-    // val weavingTime = weavingStop - weavingStart
+    val weavingStart = System.nanoTime()
+    try {
+      Weaver.weave(ir, silver)
+    } catch {
+      case t: Throwable =>
+        throw new WeaverException(t.getMessage)
+    }
+    val weavingStop = System.nanoTime()
+    val weavingTime = weavingStop - weavingStart
+    println("Weaving Completed!")
 
-    // val c0Source = IRPrinter.print(ir, includeSpecs = false)
-    // if (config.dump.contains(Config.DumpPYTEAL))
-    //   dumpPYTEAL(c0Source)
-    // VerifiedOutput(
-    //   silver.program,
-    //   c0Source,
-    //   ProfilingInfo(
-    //     profilingInfo.getTotalConjuncts,
-    //     profilingInfo.getEliminatedConjuncts
-    //   ),
-    //   VerifierTiming(
-    //     translationTime,
-    //     verificationTime,
-    //     weavingTime
-    //   )
-    // )
+    val c0Source = IRPrinter.print(ir, includeSpecs = false)
+    if (config.dump.contains(Config.DumpPYTEAL))
+      dumpPYTEAL(c0Source)
+    VerifiedOutput(
+      silver.program,
+      c0Source,
+      ProfilingInfo(
+        profilingInfo.getTotalConjuncts,
+        profilingInfo.getEliminatedConjuncts
+      ),
+      VerifierTiming(
+        translationTime,
+        verificationTime,
+        weavingTime
+      )
+    )
   }
 
   def execute(
