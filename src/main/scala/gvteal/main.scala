@@ -88,7 +88,7 @@ object Main extends App {
       case Success(value, _) => value
     }
 
-    //println(parsed)
+    println(parsed)
     val cmdConfig = Config.fromCommandLineArgs(args.toList)
     val fileNames = getOutputCollection(config.sourceFile.get)
 

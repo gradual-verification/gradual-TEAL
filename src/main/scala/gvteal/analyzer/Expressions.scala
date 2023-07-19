@@ -5,6 +5,12 @@ sealed trait ResolvedExpression extends ResolvedNode {
   def valueType: ResolvedType
 }
 
+case class ResolvedRequiresSpecification(
+    //requiresSpecification: RequiresSpecification,
+    parsed: Node,
+    valueType: ResolvedType = BoolType
+) extends ResolvedExpression
+
 case class ResolvedVariableRef(
   parsed: Node,
   variable: Option[ResolvedVariable],

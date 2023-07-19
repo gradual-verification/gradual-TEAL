@@ -1109,9 +1109,28 @@ object Resolver {
           for (stmt <- body) {
             stmt match {
               case s: Ast.stmt.Spec => {
+                var specList: Array[ResolvedExpression] = Array()
                 s.specification match {
                   case requires: Ast.stmt.Specification.RequiresSpecification => {
-                    
+                    val req = requires.value
+                    req match {
+                      case name: Ast.expr.Name =>
+                          val varExpr = VariableExpression(Identifier(name.id.name, null), null)
+                          val resolvedRequiresSpec = ResolvedRequiresSpecification(varExpr, BoolType)
+                          specList = specList :+ resolvedRequiresSpec
+                      case id: Ast.identifier =>
+                          val varExpr = VariableExpression(Identifier(id.name, null), null)
+                          val resolvedRequiresSpec = ResolvedRequiresSpecification(RequiresSpecification(varExpr, null), BoolType)
+                          specList = specList :+ resolvedRequiresSpec
+                      case comp: Ast.expr.Compare =>
+                          val compareExpr = resolveCompare(comp)
+                          val resolvedRequiresSpec = ResolvedRequiresSpecification(compareExpr, BoolType)
+                          specList = specList :+ resolvedRequiresSpec
+                      case ifExp: Ast.expr.IfExp =>
+                        val ternaryExpr = resolveIfExp(ifExp)
+                        val resolvedRequiresSpec = ResolvedRequiresSpecification(ternaryExpr, BoolType)
+                        specList = specList :+ resolvedRequiresSpec
+                    }
                   }
                 }
               }
@@ -1309,6 +1328,59 @@ object Resolver {
     
     def intVal(value: Int) = IntegerExpression(value.toString(), value, null)
 
+    def resolveCompare(comp: Ast.expr.Compare): Node = {
+      var compArgs: Array[Expression] = Array()
+      for (compValu <- comp.comparators) {
+        compValu match {
+          case num: Ast.expr.Num =>
+            compArgs = compArgs :+ intVal(num.n.toString.toInt) 
+          case id: Ast.expr.Name =>
+            compArgs = compArgs :+ VariableExpression(Identifier(id.id.name, null), null) 
+          case id: Ast.identifier =>
+            compArgs = compArgs :+ VariableExpression(Identifier(id.name, null), null) 
+          case binOp: Ast.expr.PyTealBinOp => 
+            var binOpArgs: Array[Expression] = Array()
+            val op = binOp.op.toString
+            for (valu <- binOp.values) {
+                valu match {
+                    case num: Ast.expr.Num =>
+                        binOpArgs = binOpArgs :+ intVal(num.n.toString.toInt)
+                    case id: Ast.expr.Name =>
+                        binOpArgs = binOpArgs :+ VariableExpression(Identifier(id.id.name, null), null)
+                    case id: Ast.identifier =>
+                        binOpArgs = binOpArgs :+ VariableExpression(Identifier(id.name, null), null)
+                }
+            }
+            val combinedBinOpExpr = combineExpressions(binOpArgs, opBinMap.getOrElse(op, BinaryOperator.Add))
+            compArgs = compArgs :+ combinedBinOpExpr
+          case call: Ast.expr.Call =>
+            for (valu <- call.args) {
+              valu match {
+                case num: Ast.expr.Num =>
+                  compArgs = compArgs :+ intVal(num.n.toString.toInt)
+                case id: Ast.expr.Name =>
+                  compArgs = compArgs :+ VariableExpression(Identifier(id.id.name, null), null)
+                case id: Ast.identifier =>
+                  compArgs = compArgs :+ VariableExpression(Identifier(id.name, null), null)
+              }
+            }
+        }
+      }
+      
+      val compareOps = comp.ops.map(op => opBinMap.getOrElse(op.toString, BinaryOperator.Equal))
+      
+      val leftExpr = comp.left match {
+        case num: Ast.expr.Num => intVal(num.n.toString.toInt)
+        case id: Ast.expr.Name => VariableExpression(Identifier(id.id.name, null), null)
+        case id: Ast.identifier => VariableExpression(Identifier(id.name, null), null)
+      }
+      
+      BinaryExpression(leftExpr, compareOps(0), compArgs(0), null)
+    }
+
+    def resolveIfExp(ifExp: Ast.expr.IfExp): Node = {
+      
+    }
   // def resolveProgram(
   //     defs: List[Definition],
   //     librarySearchPaths: List[String],
