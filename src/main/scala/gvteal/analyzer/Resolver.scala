@@ -887,6 +887,7 @@ object Resolver {
             specScope,
             SpecificationContext
           )
+          println("preconditions are " + preconditions)
         case ensures: EnsuresSpecification =>
           postconditions += resolveExpression(
             ensures.value,
@@ -918,7 +919,6 @@ object Resolver {
         }
       }
     }
-
     ResolvedMethodDeclaration(
       parsed = input,
       name = input.id.name,
@@ -1062,6 +1062,14 @@ object Resolver {
     "PyTealBitwiseNot"   -> UnaryOperator.BitwiseNot
   )
 
+  def stringToBoolean(s: String): Boolean = {
+    s.toLowerCase match {
+      case "true" => true
+      case "false" => false
+      case _ => throw new IllegalArgumentException(s"$s cannot be converted to Boolean.")
+    }
+  }
+
   def randomName: String = s"random_${Random.nextInt(10000)}"
 
   def combineExpressions(expressions: Seq[Expression], op: BinaryOperator.Value): Expression = expressions match {
@@ -1097,6 +1105,7 @@ object Resolver {
           val body = p.body
           var blocks: Array[Statement] = Array()
           var argsList: List[(String, Type)] = Nil
+          var specList: List[Specification] = Nil
           val arguments = args match {
             case Some(x) => x.args
             case None => Seq()
@@ -1109,27 +1118,25 @@ object Resolver {
           for (stmt <- body) {
             stmt match {
               case s: Ast.stmt.Spec => {
-                var specList: Array[ResolvedExpression] = Array()
                 s.specification match {
                   case requires: Ast.stmt.Specification.RequiresSpecification => {
                     val req = requires.value
                     req match {
                       case name: Ast.expr.Name =>
-                          val varExpr = VariableExpression(Identifier(name.id.name, null), null)
-                          val resolvedRequiresSpec = ResolvedRequiresSpecification(varExpr, BoolType)
-                          specList = specList :+ resolvedRequiresSpec
+                          val raw = name.id.name
+                          val value = stringToBoolean(raw)
+                          val boolExpr = BooleanExpression(raw, value, null)
+                          specList = specList :+ RequiresSpecification(boolExpr, null)
                       case id: Ast.identifier =>
                           val varExpr = VariableExpression(Identifier(id.name, null), null)
-                          val resolvedRequiresSpec = ResolvedRequiresSpecification(RequiresSpecification(varExpr, null), BoolType)
-                          specList = specList :+ resolvedRequiresSpec
+                          specList = specList :+ RequiresSpecification(varExpr, null)
                       case comp: Ast.expr.Compare =>
                           val compareExpr = resolveCompare(comp)
-                          val resolvedRequiresSpec = ResolvedRequiresSpecification(compareExpr, BoolType)
-                          specList = specList :+ resolvedRequiresSpec
-                      case ifExp: Ast.expr.IfExp =>
-                        val ternaryExpr = resolveIfExp(ifExp)
-                        val resolvedRequiresSpec = ResolvedRequiresSpecification(ternaryExpr, BoolType)
-                        specList = specList :+ resolvedRequiresSpec
+                          specList = specList :+ RequiresSpecification(compareExpr, null)
+                      // case ifExp: Ast.expr.IfExp =>
+                      //   val ternaryExpr = resolveIfExp(ifExp)
+                      //   val resolvedRequiresSpec = ResolvedRequiresSpecification(ternaryExpr, BoolType)
+                      //   specList = specList :+ resolvedRequiresSpec
                     }
                   }
                 }
@@ -1264,14 +1271,16 @@ object Resolver {
             argsList,
             Some(
               block(blocks: _*)
-            )
+            ),
+            specList
           )
           // val  body = m.body
           // for (stmt <- body) {
           //   println(stmt)
           // }
+
           val decl = resolveMethodDeclaration(m, scope)
-          // println(decl)
+          //println("resolve method declaration = " + decl)
           methodDeclarations += decl
           scope = scope.declareMethod(decl)
 
@@ -1304,7 +1313,8 @@ object Resolver {
       name: String,
       retType: Type,
       arguments: List[(String, Type)],
-      body: Option[BlockStatement] = None
+      body: Option[BlockStatement] = None,
+      specifications: List[Specification]
   ) =
     MethodDefinition(
       id = Identifier(name, null),
@@ -1313,7 +1323,7 @@ object Resolver {
         MemberDefinition(Identifier(name, null), typ, null)
       },
       body = body,
-      specifications = List.empty,
+      specifications = specifications,
       span = null
     )
 
@@ -1328,7 +1338,7 @@ object Resolver {
     
     def intVal(value: Int) = IntegerExpression(value.toString(), value, null)
 
-    def resolveCompare(comp: Ast.expr.Compare): Node = {
+    def resolveCompare(comp: Ast.expr.Compare): Expression = {
       var compArgs: Array[Expression] = Array()
       for (compValu <- comp.comparators) {
         compValu match {
@@ -1378,9 +1388,38 @@ object Resolver {
       BinaryExpression(leftExpr, compareOps(0), compArgs(0), null)
     }
 
-    def resolveIfExp(ifExp: Ast.expr.IfExp): Node = {
+    // def resolveIfExp(ifExp: Ast.expr.IfExp): Node = {
+    //   val conditionNode = resolveExpression(ifExp.test)
+    //   val ifTrueNode = resolveExpression(ifExp.body)
+    //   val ifFalseNode = resolveExpression(ifExp.orelse)
+
+    //   (conditionNode, ifTrueNode, ifFalseNode) match {
+    //     case (condition: Expression, ifTrue: Expression, ifFalse: Expression) =>
+    //       TernaryExpression(condition, ifTrue, ifFalse, null)
+    //     case _ => 
+    //       throw new RuntimeException("Not all elements of IfExp could be resolved to Expressions")
+    //   }
+    // }
+
+    // def resolveExpression(expr: Ast.expr): Node = expr match {
+    //   case num: Ast.expr.Num => 
+    //     intVal(num.n.toString.toInt) 
+    //   case name: Ast.expr.Name => 
+    //     VariableExpression(Identifier(name.id.name, null), null) 
+    //   case id: Ast.identifier => 
+    //     VariableExpression(Identifier(id.name, null), null) 
+    //   case comp: Ast.expr.Compare => 
+    //     resolveCompare(comp)
+    //   case boolOp: Ast.expr.BoolOp => 
+    //     resolveBoolOp(boolOp)
+    //   case call: Ast.expr.Call => 
+    //     resolveCall(call)
+    // }
+
+    // def resolveBoolOp(expr: Ast.expr): Node = {
       
-    }
+    // }
+
   // def resolveProgram(
   //     defs: List[Definition],
   //     librarySearchPaths: List[String],
