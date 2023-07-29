@@ -12,7 +12,8 @@ return
 
 from pyteal import *
 
-def add_compare():
+def add_compare(quantity: abi.Uint64):
+    #@ requires ? && quantity >= 0;
     #on_initialization = Txn.application_id() == Int(1)
     #on_update = Txn.application_id() != Int(0)
     

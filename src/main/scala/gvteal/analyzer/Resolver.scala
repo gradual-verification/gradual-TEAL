@@ -1135,8 +1135,7 @@ object Resolver {
                           specList = specList :+ RequiresSpecification(compareExpr, null)
                       // case ifExp: Ast.expr.IfExp =>
                       //   val ternaryExpr = resolveIfExp(ifExp)
-                      //   val resolvedRequiresSpec = ResolvedRequiresSpecification(ternaryExpr, BoolType)
-                      //   specList = specList :+ resolvedRequiresSpec
+                      //   specList = specList :+ RequiresSpecification(ternaryExpr, null)
                     }
                   }
                 }
