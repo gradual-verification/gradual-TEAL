@@ -9,7 +9,7 @@ object Specifications{
   }
 
   def requiresSpecification[$: P]: P[Ast.stmt.Specification] = 
-    P(kw("requires") ~ Expressions.test ~ ";").map { e =>
+    P(kw("requires") ~ ( Expressions.imprecisionAndTest | Expressions.imprecisionExpression | Expressions.test) ~ ";").map { e =>
       Ast.stmt.Specification.RequiresSpecification(e)
   }
 

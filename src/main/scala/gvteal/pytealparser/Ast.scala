@@ -12,6 +12,12 @@ object Ast{
   type `object` = Double
   type string = String
 
+  sealed trait span
+  object Span{
+    case class SourcePosition(line: Int, column: Int, index: Int) extends span
+    case class SourceSpan(start: SourcePosition, end: SourcePosition) extends span
+  }
+
   sealed trait mod
   object mod{
     case class Module(body: Seq[stmt]) extends mod
@@ -82,6 +88,7 @@ object Ast{
   // BoolOp() can use left & right?
   sealed trait expr
   object expr{
+    case class ImprecisionExpression(span: Span.SourceSpan) extends expr
 
     //case class PyTealInt(integer: Any) extends expr
     case class PyTealBytes(base: Any, value: Any) extends expr
