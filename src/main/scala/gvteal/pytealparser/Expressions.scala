@@ -361,11 +361,6 @@ object Expressions {
 
   def fpdef[$: P]: P[Ast.expr] = P( NAME.map(Ast.expr.Name(_, Ast.expr_context.Param)) | "(" ~ fplist ~ ")" )
   def fplist[$: P]: P[Ast.expr] = P( fpdef.rep(sep = ",") ~ ",".? ).map(Ast.expr.Tuple(_, Ast.expr_context.Param))
-  
-  def imprecisionAndTest[$: P]: P[Ast.expr] = 
-    P(Expressions.imprecisionExpression ~ kw("&&") ~ Expressions.test).map {
-      case (imprecision, test) => Ast.expr.BoolOp(Ast.boolop.And, List(imprecision, test))
-  }
 
   def imprecisionExpression[$: P]: P[Ast.expr.ImprecisionExpression] = P( ParserPyTeal.span(kw("?"))).map{
     case (_, s) => Ast.expr.ImprecisionExpression(s)
