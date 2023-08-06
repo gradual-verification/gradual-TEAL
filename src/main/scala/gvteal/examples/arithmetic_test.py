@@ -2,8 +2,9 @@ from pyteal import *
 
 # comment: This is a test for the basic pyteal or python arithmetic operations
 def arithmetic_operation(quantity: abi.Uint64, quantity2: abi.Uint64):
-    #@ requires ? && quantity >= 0;
-    #@ requires true;
+    #@ requires ? and (quantity >= 0 or quantity2 < 100000);
+    
+    #@ ensures ? and \result > 10;
 
     int_20 = Int(20)
     int_20_20 = int_20
