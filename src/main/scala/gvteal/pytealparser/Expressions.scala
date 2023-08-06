@@ -365,4 +365,7 @@ object Expressions {
   def imprecisionExpression[$: P]: P[Ast.expr.ImprecisionExpression] = P( ParserPyTeal.span(kw("?"))).map{
     case (_, s) => Ast.expr.ImprecisionExpression(s)
   }
+
+  def resultExpression[$: P]: P[Ast.expr.ResultExpression] = P(ParserPyTeal.span(kw("\\result")))
+    .map({ case (_, s) => Ast.expr.ResultExpression(s) })
 }

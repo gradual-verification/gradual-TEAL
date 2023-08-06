@@ -89,6 +89,7 @@ object Ast{
   sealed trait expr
   object expr{
     case class ImprecisionExpression(span: Span.SourceSpan) extends expr
+    case class ResultExpression(span: Span.SourceSpan) extends expr
 
     //case class PyTealInt(integer: Any) extends expr
     case class PyTealBytes(base: Any, value: Any) extends expr
