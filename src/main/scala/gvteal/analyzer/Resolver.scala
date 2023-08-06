@@ -1002,7 +1002,25 @@ object Resolver {
     program
   }
 
+  def convertSpan(span: Ast.Span.SourceSpan): SourceSpan = {
+    val start = SourcePosition(
+      line = span.start.line, 
+      column = span.start.column, 
+      index = span.start.index
+    )
+
+    val end = SourcePosition(
+      line = span.end.line, 
+      column = span.end.column, 
+      index = span.end.index
+    )
+
+    SourceSpan(start, end)
+  }
+
   val opBinMap: Map[String, BinaryOperator.BinaryOperator] = Map(
+    "And"                 -> BinaryOperator.LogicalAnd,
+    "Or"                  -> BinaryOperator.LogicalOr,
     "Eq"                  -> BinaryOperator.Equal,
     "NotEq"               -> BinaryOperator.NotEqual,
     "Lt"                  -> BinaryOperator.Less,
@@ -1073,8 +1091,9 @@ object Resolver {
   def randomName: String = s"random_${Random.nextInt(10000)}"
 
   def combineExpressions(expressions: Seq[Expression], op: BinaryOperator.Value): Expression = expressions match {
+    case Seq() => throw new IllegalArgumentException("No expressions to combine.")
     case Seq(head) => head
-    case head +: tail => BinaryExpression(head, op, combineExpressions(tail, op), null)
+    case Seq(head, second, _*) => BinaryExpression(head, op, combineExpressions(expressions.tail, op), null)
   }
 
   def resolvePyTealProgram(
@@ -1133,11 +1152,89 @@ object Resolver {
                       case comp: Ast.expr.Compare =>
                           val compareExpr = resolveCompare(comp)
                           specList = specList :+ RequiresSpecification(compareExpr, null)
+                      case boolOp: Ast.expr.BoolOp =>
+                          val boolOpExpr = resolveBoolOp(boolOp)
+                          specList = specList :+ RequiresSpecification(boolOpExpr, null)
+
+                      // TODO: case ifExp: Ast.expr.IfExp =>
+                      //   val ternaryExpr = resolveIfExp(ifExp)
+                      //   specList = specList :+ RequiresSpecification(ternaryExpr, null)
+                    }
+                  }
+
+                  case ensures: Ast.stmt.Specification.EnsuresSpecification => {
+                    val en = ensures.value
+                    en match {
+                      case name: Ast.expr.Name =>
+                          val raw = name.id.name
+                          val value = stringToBoolean(raw)
+                          val boolExpr = BooleanExpression(raw, value, null)
+                          specList = specList :+ EnsuresSpecification(boolExpr, null)
+                      case id: Ast.identifier =>
+                          val varExpr = VariableExpression(Identifier(id.name, null), null)
+                          specList = specList :+ EnsuresSpecification(varExpr, null)
+                      case comp: Ast.expr.Compare =>
+                          val compareExpr = resolveCompare(comp)
+                          specList = specList :+ EnsuresSpecification(compareExpr, null)
+                      case boolOp: Ast.expr.BoolOp =>
+                          val boolOpExpr = resolveBoolOp(boolOp)
+                          specList = specList :+ EnsuresSpecification(boolOpExpr, null)
+
                       // case ifExp: Ast.expr.IfExp =>
                       //   val ternaryExpr = resolveIfExp(ifExp)
                       //   specList = specList :+ RequiresSpecification(ternaryExpr, null)
                     }
                   }
+
+                  case asserts: Ast.stmt.Specification.AssertSpecification => {
+                    val a = asserts.value
+                    a match {
+                      case name: Ast.expr.Name =>
+                          val raw = name.id.name
+                          val value = stringToBoolean(raw)
+                          val boolExpr = BooleanExpression(raw, value, null)
+                          specList = specList :+ AssertSpecification(boolExpr, null)
+                      case id: Ast.identifier =>
+                          val varExpr = VariableExpression(Identifier(id.name, null), null)
+                          specList = specList :+ AssertSpecification(varExpr, null)
+                      case comp: Ast.expr.Compare =>
+                          val compareExpr = resolveCompare(comp)
+                          specList = specList :+ AssertSpecification(compareExpr, null)
+                      case boolOp: Ast.expr.BoolOp =>
+                          val boolOpExpr = resolveBoolOp(boolOp)
+                          specList = specList :+ AssertSpecification(boolOpExpr, null)
+
+                      // case ifExp: Ast.expr.IfExp =>
+                      //   val ternaryExpr = resolveIfExp(ifExp)
+                      //   specList = specList :+ RequiresSpecification(ternaryExpr, null)
+                    }
+                  }
+
+                  case loop: Ast.stmt.Specification.LoopInvariantSpecification => {
+                    val l = loop.value
+                    l match {
+                      case name: Ast.expr.Name =>
+                          val raw = name.id.name
+                          val value = stringToBoolean(raw)
+                          val boolExpr = BooleanExpression(raw, value, null)
+                          specList = specList :+ LoopInvariantSpecification(boolExpr, null)
+                      case id: Ast.identifier =>
+                          val varExpr = VariableExpression(Identifier(id.name, null), null)
+                          specList = specList :+ LoopInvariantSpecification(varExpr, null)
+                      case comp: Ast.expr.Compare =>
+                          val compareExpr = resolveCompare(comp)
+                          specList = specList :+ LoopInvariantSpecification(compareExpr, null)
+                      case boolOp: Ast.expr.BoolOp =>
+                          val boolOpExpr = resolveBoolOp(boolOp)
+                          specList = specList :+ LoopInvariantSpecification(boolOpExpr, null)
+
+                      // case ifExp: Ast.expr.IfExp =>
+                      //   val ternaryExpr = resolveIfExp(ifExp)
+                      //   specList = specList :+ RequiresSpecification(ternaryExpr, null)
+                    }
+                  }
+
+                  // TODO: fold, unfold
                 }
               }
               case r: Ast.stmt.Return => {
@@ -1336,6 +1433,19 @@ object Resolver {
       BlockStatement(body.toList, null, List(), List())
     
     def intVal(value: Int) = IntegerExpression(value.toString(), value, null)
+
+    def resolveBoolOp(boolOp: Ast.expr.BoolOp): Expression = {
+      val op = boolOp.op.toString
+      val expressions = boolOp.values.map {
+        case imprecise: Ast.expr.ImprecisionExpression =>
+          ImprecisionExpression(convertSpan(imprecise.span))
+        case comp: Ast.expr.Compare =>
+          resolveCompare(comp)
+        case nestedBoolOp: Ast.expr.BoolOp =>
+          resolveBoolOp(nestedBoolOp)
+      }
+      combineExpressions(expressions, opBinMap.getOrElse(op, BinaryOperator.Add))
+    }
 
     def resolveCompare(comp: Ast.expr.Compare): Expression = {
       var compArgs: Array[Expression] = Array()
