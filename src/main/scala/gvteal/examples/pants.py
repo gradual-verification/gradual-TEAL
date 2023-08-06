@@ -1,5 +1,7 @@
 from pyteal import *
 
+#@ global Count;
+
 handle_creation = Seq(App.globalPut(Bytes("Count"), Int(0)), Approve())
 
 sell_pant_from_external = Seq(
@@ -19,7 +21,6 @@ router = Router(
 @router.method
 def add(quantity: abi.Uint64):
     #@ requires quantity >= 0;
-    #@ ensures true;
     scratchCount = ScratchVar(TealType.uint64)
     return Seq(
         scratchCount.store(App.globalGet(Bytes("Count"))),
@@ -29,7 +30,6 @@ def add(quantity: abi.Uint64):
 @router.method
 def sell(quantity: abi.Uint64):
     #@ requires quantity >= 0;
-    #@ ensures true;
     scratchCount = ScratchVar(TealType.uint64)
     return Seq(
         scratchCount.store(App.globalGet(Bytes("Count"))),

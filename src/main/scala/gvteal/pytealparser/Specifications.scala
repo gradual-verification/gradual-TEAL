@@ -37,4 +37,9 @@ object Specifications{
     P(kw("unfold") ~ Lexical.identifier ~ "(" ~ Expressions.test.rep(sep=",") ~ ")" ~ ";").map { case (ident, args) =>
       Ast.stmt.Specification.UnfoldSpecification(ident, args.toList)
   }
+
+  def globalDeclaration[$: P]: P[Ast.stmt.Specification] =
+    P(kw("global") ~ " ".rep ~ Lexical.identifier.rep(sep=",") ~ ";").map { case (args) =>
+      Ast.stmt.Specification.GlobalDeclaration(args.toList)
+  }
 }

@@ -33,6 +33,7 @@ object Ast{
     
     case class ClassDef(name: identifier, bases: Seq[expr], body: Seq[stmt], decorator_list: Seq[expr]) extends stmt
     case class Return(value: Option[expr]) extends stmt
+    case class ScratchVar(name: identifier, teal_type: tealtype) extends stmt
 
     case class Delete(targets: Seq[expr]) extends stmt
     case class Assign(targets: Seq[expr], value: expr) extends stmt
@@ -80,6 +81,7 @@ object Ast{
       case class AssertSpecification(value: expr) extends Specification
       case class FoldSpecification(predicate: identifier, arguments: List[expr]) extends Specification
       case class UnfoldSpecification(predicate: identifier, arguments: List[expr]) extends Specification
+      case class GlobalDeclaration(args: List[identifier]) extends Specification
     }
 
     case class Spec(specification: Specification) extends stmt
@@ -115,9 +117,10 @@ object Ast{
 
     case class PyTealSeq(values: Seq[Any]) extends expr
 
-    case class ScratchLoad(identifier: Any) extends expr
-    case class ScratchStore(identifier: Any, expr: Any) extends expr
-    case class Get(identifier: Any) extends expr
+    case class ScratchLoad(name: identifier) extends expr
+    case class ScratchStore(name: identifier, expr: Any) extends expr
+    case class Get(name: identifier) extends expr
+    case class SetValue(name: identifier, expr: Any) extends expr
 
     case class BoolOp(op: boolop, values: Seq[expr]) extends expr
     case class BinOp(left: expr, op: operator, right: expr) extends expr
@@ -194,6 +197,14 @@ object Ast{
     case object String extends abitype
     case object Tuple extends abitype
     case object NamedTuple extends abitype
+
+  }
+
+  sealed trait tealtype
+  case object tealtype {
+
+    case object Uint64 extends tealtype
+    case object Bytes extends tealtype
 
   }
 

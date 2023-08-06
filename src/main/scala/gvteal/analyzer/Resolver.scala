@@ -7,6 +7,10 @@ import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable.ListBuffer
 import java.io.IOException
 import scala.util.Random
+import gvteal.pytealparser.Ast.pytealop.PyTealAdd
+import gvteal.pytealparser.Ast.pytealop.PyTealMinus
+import gvteal.pytealparser.Ast.pytealop.PyTealBytesMul
+import gvteal.pytealparser.Ast.pytealop.PyTealBytesDiv
 
 trait ResolvedNode {
   val parsed: Node
@@ -887,7 +891,6 @@ object Resolver {
             specScope,
             SpecificationContext
           )
-          println("preconditions are " + preconditions)
         case ensures: EnsuresSpecification =>
           postconditions += resolveExpression(
             ensures.value,
@@ -1115,6 +1118,8 @@ object Resolver {
             argsList = argsList :+ (arg._1.name, if (arg._2 == "Uint64") namedType("int") else namedType("int"))
           }
 
+          argsList = argsList :+ ("global", PointerType(NamedStructType(Identifier("Global", null), null), null))
+
           for (stmt <- body) {
             stmt match {
               case s: Ast.stmt.Spec => {
@@ -1141,9 +1146,97 @@ object Resolver {
                 }
               }
               case r: Ast.stmt.Return => {
-                for (valu <- r.value) {
-                  var valuName = valu.asInstanceOf[Ast.expr.Name]
-                  blocks = blocks :+ ReturnStatement(Some(varRef(valuName.id.name)), null)
+                r.value.get match {
+                  case name: Ast.expr.Name => 
+                    for (valu <- r.value) {
+                      var valuName = valu.asInstanceOf[Ast.expr.Name]
+                      blocks = blocks :+ ReturnStatement(Some(varRef(valuName.id.name)), null)
+                    }
+                  
+                  case seq: Ast.expr.PyTealSeq =>
+                      for (expression <- seq.values.init) {
+                        expression match {
+                          case ss: Ast.expr.ScratchStore => {
+                            ss.expr match {
+                              case right: Ast.expr.GlobalGet => {
+                                right.key match {
+                                  case bytes : Ast.expr.PyTealBytesStored => {
+                                    val rightexpr = MemberExpression(VariableExpression(Identifier("global", null), null), Identifier(bytes.key.toString, null), true, null)
+                                    blocks = blocks :+ AssignmentStatement(VariableExpression(Identifier(ss.name.name, null), null), AssignOperator.Assign, rightexpr, null)
+                                  }
+                                }
+                                
+                              }
+                            }
+                          }
+                        }
+                      }
+                      seq.values.last match {
+                        case globalPut: Ast.expr.GlobalPut => {
+                          var left:Expression = null
+                          var right:Expression = null
+                          var returnExpr:Expression = null
+                          globalPut.key match {
+                            case bytes: Ast.expr.PyTealBytesStored => {
+                              left = MemberExpression(VariableExpression(Identifier("global", null), null), Identifier(bytes.key.toString, null), true, null)
+                              returnExpr = MemberExpression(VariableExpression(Identifier("global", null), null), Identifier(bytes.key.toString, null), true, null)
+                            }
+                          }
+                          globalPut.value match {
+                            case pytealexpr: Ast.expr.PyTealExpr => {
+                              var expr1:Expression = null
+                              var expr2:Expression = null
+                              pytealexpr.expr1 match {
+                                case sl: Ast.expr.ScratchLoad => {
+                                  expr1 = VariableExpression(Identifier(sl.name.name, null), null)
+                                }
+                              }
+                              pytealexpr.expr2 match {
+                                case g: Ast.expr.Get => {
+                                  expr2 = VariableExpression(Identifier(g.name.name, null), null)
+                                }
+                              }
+                              pytealexpr.op match {
+                                case PyTealAdd => {
+                                  right = BinaryExpression(expr1, BinaryOperator.Add, expr2, null)
+                                }
+                                case PyTealMinus => {
+                                  right = BinaryExpression(expr1, BinaryOperator.Subtract, expr2, null)
+                                }
+                                case PyTealBytesMul => {
+                                  right = BinaryExpression(expr1, BinaryOperator.Multiply, expr2, null)
+                                }
+                                case PyTealBytesDiv => {
+                                  right = BinaryExpression(expr1, BinaryOperator.Divide, expr2, null)
+                                }
+                              }
+                            }
+                          }
+                          blocks = blocks :+ AssignmentStatement(left, AssignOperator.Assign, right, null)
+                          blocks = blocks :+ ReturnStatement(Some(returnExpr), null)
+                        }
+                      }
+                
+                  case setValue: Ast.expr.SetValue => {
+                    var returnExpr:Expression = null 
+                    setValue.expr match {
+                      case right: Ast.expr.GlobalGet => {
+                        right.key match {
+                          case bytes : Ast.expr.PyTealBytesStored => {
+                            val rightexpr = MemberExpression(VariableExpression(Identifier("global", null), null), Identifier(bytes.key.toString, null), true, null)
+                            blocks = blocks :+ AssignmentStatement(VariableExpression(Identifier(setValue.name.name, null), null), AssignOperator.Assign, rightexpr, null)
+                            returnExpr = VariableExpression(Identifier(setValue.name.name, null), null)
+                          }
+                        }
+                      } 
+                    }
+                    blocks = blocks :+ ReturnStatement(Some(returnExpr), null)
+                  }
+                } 
+              }
+              case sv: Ast.stmt.ScratchVar => {
+                if (sv.teal_type == Ast.tealtype.Uint64) {
+                  blocks = blocks :+ varDef(sv.name.name, namedType("int"), Some(intVal(0)))
                 }
               }
               case a: Ast.stmt.Assign => {
@@ -1288,6 +1381,22 @@ object Resolver {
             methodDefinitions += definition
             scope = scope.defineMethod(definition)
           }
+        }
+        case s: Ast.stmt.Spec => {
+            s.specification match {
+              case global: Ast.stmt.Specification.GlobalDeclaration => {
+                var memberDefinitions = List[MemberDefinition]()
+                for (arg <- global.args) {
+                  memberDefinitions =  MemberDefinition(Identifier(arg.name, null), NamedType(Identifier("int", null), null), null) :: memberDefinitions
+                }
+                val definition = resolveStructDefinition(StructDefinition(Identifier("Global", null), Some(memberDefinitions), null), scope)
+                structDefinitions += definition
+                scope = scope.defineStruct(definition)
+              }
+            }
+        }
+        case default => {
+
         }
       }
     }
