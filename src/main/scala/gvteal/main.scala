@@ -88,7 +88,7 @@ object Main extends App {
       case Success(value, _) => value
     }
 
-    println(parsed)
+    //println(parsed)
     val cmdConfig = Config.fromCommandLineArgs(args.toList)
     val fileNames = getOutputCollection(config.sourceFile.get)
 
@@ -340,6 +340,8 @@ object Main extends App {
     val silver = IRSilver.toSilver(ir)
     val translationStop = System.nanoTime()
     val translationTime = translationStop - translationStart
+    // val c0Source2 = IRPrinter.print(ir, includeSpecs = false)
+    // dumpPYTEAL(c0Source2)
 
     if (config.dump.contains(Config.DumpIR))
       dump(IRPrinter.print(ir, includeSpecs = true))

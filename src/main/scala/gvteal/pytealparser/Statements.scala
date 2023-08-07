@@ -71,9 +71,13 @@ class Statements(indent: Int){
   def stmt[$: P]: P[Seq[Ast.stmt]] = P( specification_stmt | compound_stmt.map(Seq(_)) | simple_stmt)
   //def stmt[$: P]: P[Seq[Ast.stmt]] = P( compound_stmt.map(Seq(_)) | simple_stmt)
 
+  def scratch_var[$:P]: P[Ast.stmt] = P (Lexical.identifier ~ " ".rep ~ "=" ~ " ".rep ~ "ScratchVar" ~ "(" ~ pyteal_teal_types ~ ")")map {
+    case (identifier, teal_type) => Ast.stmt.ScratchVar(identifier, teal_type) 
+  }
+
   def simple_stmt[$: P]: P[Seq[Ast.stmt]] = P( small_stmt.rep(1, sep = ";") ~ ";".? )
   def small_stmt[$: P]: P[Ast.stmt] = P(
-    print_stmt  | del_stmt | pass_stmt | flow_stmt |
+    scratch_var | print_stmt  | del_stmt | pass_stmt | flow_stmt |
     import_stmt | global_stmt | exec_stmt | assert_stmt | expr_stmt
   )
   def expr_stmt[$: P]: P[Ast.stmt] = {
@@ -196,7 +200,9 @@ class Statements(indent: Int){
 
   def specification_stmt[$: P]: P[Seq[Ast.stmt]] = P( singleLineAnnotation | multiLineAnnotation ).map(specs => specs.map(Ast.stmt.Spec(_)))
   def specification_name[$: P]: P[Ast.stmt.Specification] = 
-  P( CharsWhileIn(" \t").? ~ "#@ " ~ (Specifications.requiresSpecification | Specifications.ensuresSpecification | Specifications.assertSpecification | Specifications.loopInvariantSpecification | Specifications.foldSpecification | Specifications.unfoldSpecification))
+  P( CharsWhileIn(" \t").? ~ "#@ " ~ (Specifications.requiresSpecification | Specifications.ensuresSpecification | Specifications.assertSpecification | Specifications.loopInvariantSpecification 
+                                      | Specifications.foldSpecification | Specifications.unfoldSpecification
+                                      | Specifications.globalDeclaration))
   def singleLineAnnotation[$: P]: P[Seq[Ast.stmt.Specification]] = P( specification_name.rep(1, sep = "\n") ~ (End | Pass))
   def multiLineAnnotation[$: P]: P[Seq[Ast.stmt.Specification]] = P( "\"\"\"@ " ~ specification_name.rep(1, sep = "\n") ~ "@\"\"\"" )
 

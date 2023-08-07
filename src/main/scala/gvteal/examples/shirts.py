@@ -1,5 +1,7 @@
 from pyteal import *
 
+#@ global Count;
+
 handle_creation = Seq(App.globalPut(Bytes("Count"), Int(0)), Approve())
 
 sell_shirt_from_external = Seq(
@@ -18,49 +20,25 @@ router = Router(
 
 @router.method
 def add(quantity: abi.Uint64):
+    #@ requires quantity >= 0;
     scratchCount = ScratchVar(TealType.uint64)
     return Seq(
         scratchCount.store(App.globalGet(Bytes("Count"))),
-        App.globalPut(Bytes("Count"), scratchCount.load() + quantity.get()),
+        App.globalPut(Bytes("Count"), scratchCount.load() + quantity.get())
     )
 
 @router.method
 def sell(quantity: abi.Uint64):
+    #@ requires quantity >= 0;
     scratchCount = ScratchVar(TealType.uint64)
     return Seq(
-        # InnerTxnBuilder.Begin(),
-        # InnerTxnBuilder.SetFields({
-        #     TxnField.type_enum: TxnType.ApplicationCall,
-        #     TxnField.application_id: app_id.get(),
-        #     TxnField.on_completion: OnComplete.NoOp,
-        #     TxnField.application_args: [Bytes("sell")],
-        # }),
-        # InnerTxnBuilder.Submit(),
-        # InnerTxnBuilder.Begin(),
-        # InnerTxnBuilder.SetFields(
-        #     {
-        #         TxnField.type_enum: TxnType.ApplicationCall,
-        #         TxnField.application_id: Int(1234),
-        #         TxnField.on_completion: OnComplete.NoOp,
-        #     }
-        # ),
-        #InnerTxnBuilder.Submit(),
-        # InnerTxnBuilder.Begin(),
-        # InnerTxnBuilder.SetFields(
-        #     {
-        #         TxnField.type_enum: TxnType.ApplicationCall,
-        #         TxnField.application_id: app_to_call.application_id(),
-        #         TxnField.on_completion: OnComplete.OptIn
-        #     }
-        # ),
-        # InnerTxnBuilder.Submit(),
         scratchCount.store(App.globalGet(Bytes("Count"))),
-        App.globalPut(Bytes("Count"), scratchCount.load() - quantity.get()),
+        App.globalPut(Bytes("Count"), scratchCount.load() - quantity.get())
     )
 
 
 @router.method
-def read_count(*, output: abi.Uint64):
+def read_count(output: abi.Uint64):
     return output.set(App.globalGet(Bytes("Count")))
 
 

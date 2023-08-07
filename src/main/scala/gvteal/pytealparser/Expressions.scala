@@ -101,6 +101,11 @@ object Expressions {
   def Tuple[$:P] = op("abi.Tuple", Ast.abitype.Tuple)
   def NamedTuple[$:P] = op("abi.NamedTuple", Ast.abitype.NamedTuple)
 
+  //PyTeal TealType
+
+  def Uint64T[$:P] = op("TealType.uint64", Ast.tealtype.Uint64)
+  def BytesT[$:P] = op("TealType.bytes", Ast.tealtype.Bytes)
+
   // PyTeal Operators
 
   // ---------- Binary Operators --------------
@@ -179,6 +184,8 @@ object Expressions {
 
   def pyteal_abi_types[$:P]: P[Ast.abitype] = P (Uint8 | Uint16 | Uint32 | Uint64 | Bool | Byte | StaticArray | Address
                                                   | StaticBytes | DynamicArray | DynamicBytes | String | Tuple | NamedTuple)
+  
+  def pyteal_teal_types[$:P]: P[Ast.tealtype] = P (Uint64T | BytesT)
 
 
   def pyteal_args_list[$:P]: P[Ast.pytealarguments] = P ((Lexical.identifier ~ " ".rep() ~ ":" ~ " ".rep() ~ pyteal_abi_types).rep(1, sep = ",")).map {
@@ -201,7 +208,11 @@ object Expressions {
     case (identifier) => Ast.expr.Get(identifier)
   }
 
-  def pyteal_expr[$:P]: P[Ast.expr] = P ((global_get | pytealInt | pytealBytesStored | scratch_load | get | scratch_store | Lexical.identifier) ~ " ".rep() ~ pyteal_arithematic_op_symbols ~ " ".rep() ~ (global_get | pytealInt | pytealBytesStored | scratch_load | get | scratch_store | Lexical.identifier)).map {
+  def set_value[$:P]: P[Ast.expr] = P (Lexical.identifier ~ "." ~ "set" ~ "(" ~ (global_get | pytealInt | pytealBytesStored) ~ ")").map {
+    case (identifier, expr) => Ast.expr.SetValue(identifier, expr)
+  }
+
+  def pyteal_expr[$:P]: P[Ast.expr] = P ((global_get | pytealInt | pytealBytesStored | scratch_load | get | scratch_store | set_value | Lexical.identifier) ~ " ".rep() ~ pyteal_arithematic_op_symbols ~ " ".rep() ~ (global_get | pytealInt | pytealBytesStored | scratch_load | get | scratch_store | Lexical.identifier)).map {
     case (expr1, op, expr2) => Ast.expr.PyTealExpr(expr1, op, expr2)
   }
 
@@ -271,6 +282,7 @@ object Expressions {
       pyteal_operators |
       global_put |
       pyteal_seq |
+      set_value |
       pyteal_expr |
       resultExpression |
       NAME.map(Ast.expr.Name(_, Ast.expr_context.Load)) |
@@ -311,7 +323,7 @@ object Expressions {
 
   def sliceop[$: P] = P( ":" ~ test.? )
   def exprlist[$: P]: P[Seq[Ast.expr]] = P( expr.rep(1, sep = ",") ~ ",".? )
-  def testlist[$: P]: P[Seq[Ast.expr]] = P( (test | pyteal_seq).rep(1, sep = ",") ~ ",".? )
+  def testlist[$: P]: P[Seq[Ast.expr]] = P( (test | pyteal_seq | set_value).rep(1, sep = ",") ~ ",".? )
   def dictorsetmaker[$: P]: P[Ast.expr] = {
     def dict_item = P( test ~ ":" ~ test )
     def dict: P[Ast.expr.Dict] = P(
