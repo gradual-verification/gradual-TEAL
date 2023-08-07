@@ -1155,6 +1155,9 @@ object Resolver {
                       case boolOp: Ast.expr.BoolOp =>
                           val boolOpExpr = resolveBoolOp(boolOp)
                           specList = specList :+ RequiresSpecification(boolOpExpr, null)
+                      case imprecise: Ast.expr.ImprecisionExpression =>
+                          val imExpr = ImprecisionExpression(convertSpan(imprecise.span))
+                          specList = specList :+ RequiresSpecification(imExpr, null)
 
                       // TODO: case ifExp: Ast.expr.IfExp =>
                       //   val ternaryExpr = resolveIfExp(ifExp)
@@ -1179,6 +1182,9 @@ object Resolver {
                       case boolOp: Ast.expr.BoolOp =>
                           val boolOpExpr = resolveBoolOp(boolOp)
                           specList = specList :+ EnsuresSpecification(boolOpExpr, null)
+                      case imprecise: Ast.expr.ImprecisionExpression =>
+                          val imExpr = ImprecisionExpression(convertSpan(imprecise.span))
+                          specList = specList :+ EnsuresSpecification(imExpr, null)
 
                       // case ifExp: Ast.expr.IfExp =>
                       //   val ternaryExpr = resolveIfExp(ifExp)
@@ -1203,6 +1209,9 @@ object Resolver {
                       case boolOp: Ast.expr.BoolOp =>
                           val boolOpExpr = resolveBoolOp(boolOp)
                           specList = specList :+ AssertSpecification(boolOpExpr, null)
+                      case imprecise: Ast.expr.ImprecisionExpression =>
+                          val imExpr = ImprecisionExpression(convertSpan(imprecise.span))
+                          specList = specList :+ AssertSpecification(imExpr, null)
 
                       // case ifExp: Ast.expr.IfExp =>
                       //   val ternaryExpr = resolveIfExp(ifExp)
@@ -1227,6 +1236,9 @@ object Resolver {
                       case boolOp: Ast.expr.BoolOp =>
                           val boolOpExpr = resolveBoolOp(boolOp)
                           specList = specList :+ LoopInvariantSpecification(boolOpExpr, null)
+                      case imprecise: Ast.expr.ImprecisionExpression =>
+                          val imExpr = ImprecisionExpression(convertSpan(imprecise.span))
+                          specList = specList :+ LoopInvariantSpecification(imExpr, null)
 
                       // case ifExp: Ast.expr.IfExp =>
                       //   val ternaryExpr = resolveIfExp(ifExp)

@@ -39,7 +39,13 @@ object Expressions {
     case Seq(x) => x
     case xs => Ast.expr.BoolOp(Ast.boolop.And, xs)
   }
-  def not_test[$: P]: P[Ast.expr] = P( (kw("not") ~ not_test).map(Ast.expr.UnaryOp(Ast.unaryop.Not, _)) | comparison )
+  //def not_test[$: P]: P[Ast.expr] = P( (kw("not") ~ not_test).map(Ast.expr.UnaryOp(Ast.unaryop.Not, _)) | comparison )
+  def not_test[$: P]: P[Ast.expr] = P(
+    imprecisionExpression |
+    resultExpression |
+    (kw("not") ~ not_test).map(Ast.expr.UnaryOp(Ast.unaryop.Not, _)) | 
+    comparison
+  )
   def comparison[$: P]: P[Ast.expr] = P( expr ~ (comp_op ~ expr).rep ).map{
     case (lhs, Nil) => lhs
     case (lhs, chunks) =>
