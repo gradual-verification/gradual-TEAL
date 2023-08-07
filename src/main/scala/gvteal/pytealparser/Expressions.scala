@@ -42,7 +42,6 @@ object Expressions {
   //def not_test[$: P]: P[Ast.expr] = P( (kw("not") ~ not_test).map(Ast.expr.UnaryOp(Ast.unaryop.Not, _)) | comparison )
   def not_test[$: P]: P[Ast.expr] = P(
     imprecisionExpression |
-    resultExpression |
     (kw("not") ~ not_test).map(Ast.expr.UnaryOp(Ast.unaryop.Not, _)) | 
     comparison
   )
@@ -214,7 +213,6 @@ object Expressions {
     case (key) => Ast.expr.GlobalGet(key)
   }
 
-
   def if_expr[$:P]: P[Ast.expr] = P ("If" ~ "(" ~ pyteal_expr ~ ")").map {
     case (expr) => Ast.expr.PyTealIf(expr)
   }
@@ -274,6 +272,7 @@ object Expressions {
       global_put |
       pyteal_seq |
       pyteal_expr |
+      resultExpression |
       NAME.map(Ast.expr.Name(_, Ast.expr_context.Load)) |
       NUMBER
     )

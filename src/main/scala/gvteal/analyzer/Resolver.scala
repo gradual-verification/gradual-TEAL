@@ -1501,6 +1501,7 @@ object Resolver {
       val compareOps = comp.ops.map(op => opBinMap.getOrElse(op.toString, BinaryOperator.Equal))
       
       val leftExpr = comp.left match {
+        case result: Ast.expr.ResultExpression => ResultExpression(convertSpan(result.span))
         case num: Ast.expr.Num => intVal(num.n.toString.toInt)
         case id: Ast.expr.Name => VariableExpression(Identifier(id.id.name, null), null)
         case id: Ast.identifier => VariableExpression(Identifier(id.name, null), null)
