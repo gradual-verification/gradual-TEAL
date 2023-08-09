@@ -4,7 +4,7 @@ import gvteal.parser.Parser
 import gvteal.pytealparser.ParserPyTeal
 import fastparse.Parsed.{Failure, Success}
 import gvteal.analyzer._
-// import gvteal.benchmarking.BenchmarkExecutor.injectAndWrite
+//import gvteal.benchmarking.BenchmarkExecutor.injectAndWrite
 import gvteal.transformer._
 // import gvteal.benchmarking.{
 //   BaselineChecker,
@@ -88,7 +88,7 @@ object Main extends App {
       case Success(value, _) => value
     }
 
-    //println(parsed)
+    println(parsed)
     val cmdConfig = Config.fromCommandLineArgs(args.toList)
     val fileNames = getOutputCollection(config.sourceFile.get)
 
@@ -97,23 +97,22 @@ object Main extends App {
         val verifiedOutput = verify(inputSource, fileNames, cmdConfig)
         println(verifiedOutput)
         Output.printTiming(() => {
-          // val errors = new ErrorSink()
-          // val resolved = Validator
-          //   .validatePyTealParsed(parsed, errors)
+          val errors = new ErrorSink()
+          val resolved = Validator
+            .validatePyTealParsed(parsed, errors)
           
-          //var ir = IRTransformer.transform(resolved)
+          var ir = IRTransformer.transform(resolved)
+          println(IRPrinter.print(ir, includeSpecs = true))
 
-          //println(IRPrinter.print(ir, includeSpecs = true))
-
-          // val silver = IRSilver.toSilver(ir)
-          // def silicon = resolveSilicon(config)
-          // val stopImmediately = true
-          // println("hh: " + silicon.returnlifetimeState())
-          // silicon.start()
-          // println("bfb: " + silicon.returnlifetimeState())
-          // //println(silver.program)
-          // //silicon.stop()
-          // println(silicon.verify(silver.program)) 
+          val silver = IRSilver.toSilver(ir)
+          def silicon = resolveSilicon(config)
+          val stopImmediately = true
+          //println("hh: " + silicon.returnlifetimeState())
+          silicon.start()
+          //println("bfb: " + silicon.returnlifetimeState())
+          //println(silver.program)
+          //silicon.stop()
+          println(silicon.verify(silver.program)) 
         })
       case _ =>
     }
@@ -139,25 +138,25 @@ object Main extends App {
       //   val benchConfig =
       //     BenchmarkExternalConfig.parseMonitor(config)
       //   BenchmarkMonitor.monitor(benchConfig)
-      // case Config.DynamicVerification | Config.FramingVerification =>
-      //   Output.printTiming(() => {
-      //     val fileNames = getOutputCollection(config.sourceFile.get)
-      //     val inputSource = readFile(config.sourceFile.get)
-      //     val onlyFraming = config.mode == Config.FramingVerification
-      //     // val ir = generateIR(inputSource, linkedLibraries)
-      //     // BaselineChecker.check(ir, onlyFraming)
-      //     val outputC0Source = Paths.get(fileNames.pyTEALFileName)
-      //     val outputBinary = Paths.get(fileNames.binaryName)
-      //     // injectAndWrite(IRPrinter.print(ir, includeSpecs = false),
-      //     //                outputC0Source)
-      //     Timing.compileTimed(
-      //       outputC0Source,
-      //       outputBinary,
-      //       config,
-      //       profilingEnabled = config.profilingEnabled || config.profilingDirectory.nonEmpty)
-      //     Timing.execTimed(outputBinary,
-      //                      List(s"--stress ${config.stressLevel.getOrElse(1)}"))
-      //   })
+      case Config.DynamicVerification | Config.FramingVerification =>
+        Output.printTiming(() => {
+          val fileNames = getOutputCollection(config.sourceFile.get)
+          val inputSource = readFile(config.sourceFile.get)
+          val onlyFraming = config.mode == Config.FramingVerification
+          // val ir = generateIR(inputSource, linkedLibraries)
+          // BaselineChecker.check(ir, onlyFraming)
+          val outputC0Source = Paths.get(fileNames.pyTEALFileName)
+          val outputBinary = Paths.get(fileNames.binaryName)
+          // injectAndWrite(IRPrinter.print(ir, includeSpecs = false),
+          //                outputC0Source)
+          // Timing.compileTimed(
+          //   outputC0Source,
+          //   outputBinary,
+          //   config,
+          //   profilingEnabled = config.profilingEnabled || config.profilingDirectory.nonEmpty)
+          // Timing.execTimed(outputBinary,
+          //                  List(s"--stress ${config.stressLevel.getOrElse(1)}"))
+        })
       // case Config.Recreate =>
       //   val benchConfig =
       //     BenchmarkExternalConfig.parseRecreator(config)
